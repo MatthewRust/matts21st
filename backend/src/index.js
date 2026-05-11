@@ -30,6 +30,13 @@ app.use('/api/cars', carsRouter);
 app.use('/api/pictures', picturesRouter);
 app.use('/api/auth', authRouter);
 
+// Global error handler — keeps the process alive and returns a JSON error
+app.use((err, _req, res, _next) => {
+  console.error('[error]', err.message, err.stack);
+  const status = err.status || err.statusCode || 500;
+  res.status(status).json({ error: err.message || 'Internal server error' });
+});
+
 app.listen(port, () => {
   console.log(`Backend listening on http://localhost:${port}`);
 });
