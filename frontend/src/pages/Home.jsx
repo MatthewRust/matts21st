@@ -38,6 +38,9 @@ export default function Home() {
         <RouteCard title="The Tally 🍺" to="/drinks">
           Count your pints on the night.
         </RouteCard>
+        <RouteCard title="Leaderboard 🏆" to="/leaderboard">
+          See who's leading the charge.
+        </RouteCard>
 
         <section id="info" className="md:col-span-3 rounded-2xl bg-white/5 p-6 backdrop-blur">
           <h2 className="text-2xl font-semibold">Event info</h2>
