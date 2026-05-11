@@ -16,6 +16,8 @@ CREATE TABLE IF NOT EXISTS users (
   driver BOOLEAN NOT NULL DEFAULT FALSE,
   car_id INTEGER,                -- FK to cars; added via ALTER after cars table exists
   public_transport_id INTEGER,   -- nullable, for future public transport linking
+  exp_arrival_date TIMESTAMPTZ,              -- optional; when they expect to arrive
+  public_transport BOOLEAN NOT NULL DEFAULT FALSE, -- true if travelling by public transport
   ex_drinks     INTEGER,                      -- optional; how many drinks they plan to have
   daily_drinks  INTEGER NOT NULL DEFAULT 0,  -- resets to 0 at 23:59:59 each day
   total_drinks  INTEGER NOT NULL DEFAULT 0   -- cumulative all-time count

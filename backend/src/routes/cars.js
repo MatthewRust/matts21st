@@ -78,6 +78,41 @@ router.post('/', async (req, res, next) => {
   }
 });
 
+// Edit car details
+router.patch('/:id', async (req, res, next) => {
+  try {
+    const allowed = ['max_num_passenger', 'description', 'departure_time', 'departure_location'];
+    const updates = {};
+
+    for (const key of allowed) {
+      if (req.body[key] !== undefined) {
+        if (key === 'max_num_passenger') {
+          updates[key] = Number(req.body[key]);
+        } else {
+          updates[key] = req.body[key] === '' ? null : req.body[key];
+        }
+      }
+    }
+
+    const fields = Object.keys(updates);
+    if (fields.length === 0) {
+      return res.status(400).json({ error: 'No fields to update' });
+    }
+
+    const setClause = fields.map((f, i) => `${f} = $${i + 1}`).join(', ');
+    const values   = [...Object.values(updates), req.params.id];
+
+    const { rows } = await pool.query(
+      `UPDATE cars SET ${setClause} WHERE car_id = $${values.length} RETURNING *`,
+      values
+    );
+    if (!rows.length) return res.status(404).json({ error: 'Car not found' });
+    res.json(rows[0]);
+  } catch (err) {
+    next(err);
+  }
+});
+
 // Join a car as a passenger (increments current_num_passenger, links user)
 router.post('/:id/join', async (req, res, next) => {
   const { user_id } = req.body;

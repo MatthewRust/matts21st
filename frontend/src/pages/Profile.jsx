@@ -4,6 +4,8 @@ import { useAuth } from '../context/AuthContext.jsx';
 import InvitationCard, { inviteLabelClass, inviteButtonClass } from '../components/InvitationCard.jsx';
 import Navbar from '../components/Navbar.jsx';
 
+import { resolveAvatar } from '../utils/resolveAvatar.js';
+
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
 function AvatarFallback() {
@@ -56,6 +58,16 @@ export default function Profile() {
       })
     : null;
 
+  const formattedArrival = user?.exp_arrival_date
+    ? new Date(user.exp_arrival_date).toLocaleString('en-GB', {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long',
+        hour: '2-digit',
+        minute: '2-digit',
+      })
+    : null;
+
   return (
     <div className="min-h-screen bg-tartan flex flex-col">
       <Navbar />
@@ -67,7 +79,7 @@ export default function Profile() {
           <div className="w-24 h-24 rounded-full overflow-hidden ring-4 ring-stone-400/40 shadow-lg">
             {!imgError ? (
               <img
-                src={user?.profile_pic_url}
+                src={resolveAvatar(user?.profile_pic_url)}
                 alt={user?.username}
                 className="w-full h-full object-cover"
                 onError={() => setImgError(true)}
@@ -93,6 +105,12 @@ export default function Profile() {
         <div className="space-y-0 mb-8">
           <InfoRow label="Name" value={user?.username} />
           <InfoRow label="Attending as" value={user?.driver ? 'Driver' : 'Guest'} />
+          {formattedArrival && (
+            <InfoRow label="Expected arrival" value={formattedArrival} />
+          )}
+          {user?.public_transport && (
+            <InfoRow label="Travel" value="By public transport" />
+          )}
 
           {car && (
             <>
@@ -113,12 +131,19 @@ export default function Profile() {
         {/* Buttons */}
         <div className="flex justify-center gap-4 flex-wrap">
           <button
-            disabled
-            title="Coming soon"
-            className={`${inviteButtonClass} opacity-40 cursor-not-allowed`}
+            onClick={() => navigate('/edit-profile')}
+            className={inviteButtonClass}
           >
             Edit details
           </button>
+          {user?.driver && (
+            <button
+              onClick={() => navigate('/edit-car')}
+              className={inviteButtonClass}
+            >
+              Edit car
+            </button>
+          )}
           <button
             onClick={handleLogout}
             className={inviteButtonClass}

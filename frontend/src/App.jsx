@@ -5,6 +5,8 @@ import Home from './pages/Home.jsx';
 import Login from './pages/Login.jsx';
 import Signup from './pages/Signup.jsx';
 import Profile from './pages/Profile.jsx';
+import EditProfile from './pages/EditProfile.jsx';
+import EditCar from './pages/EditCar.jsx';
 import DrinkIncrementer from './pages/drinkincrementer.jsx';
 import Leaderboard from './pages/leaderboard.jsx';
 
@@ -44,6 +46,22 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <Leaderboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/edit-profile"
+            element={
+              <ProtectedRoute>
+                <EditProfile />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/edit-car"
+            element={
+              <ProtectedRoute>
+                <EditCar />
               </ProtectedRoute>
             }
           />

@@ -14,6 +14,7 @@ export default function Signup() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [exDrinks, setExDrinks] = useState('');
+  const [expArrivalDate, setExpArrivalDate] = useState('');
   const [driver, setDriver] = useState(false);
   const [car, setCar] = useState({
     max_num_passenger: '',
@@ -39,6 +40,7 @@ export default function Signup() {
         driver,
         car: driver ? car : null,
         ex_drinks: exDrinks !== '' ? Number(exDrinks) : null,
+        exp_arrival_date: expArrivalDate || null,
       });
       navigate('/');
     } catch (err) {
@@ -81,7 +83,17 @@ export default function Signup() {
           </div>
 
           <div>
-            <label className={inviteLabelClass}>Drinks planned?(optional)</label>
+            <label className={inviteLabelClass}>Expected arrival time (optional)</label>
+            <input
+              className={inviteInputClass}
+              type="datetime-local"
+              value={expArrivalDate}
+              onChange={(e) => setExpArrivalDate(e.target.value)}
+            />
+          </div>
+
+          <div>
+            <label className={inviteLabelClass}>Drinks planned? (optional)</label>
             <input
               className={inviteInputClass}
               type="number"
