@@ -4,6 +4,7 @@ import ProtectedRoute from './components/ProtectedRoute.jsx';
 import Home from './pages/Home.jsx';
 import Login from './pages/Login.jsx';
 import Signup from './pages/Signup.jsx';
+import Profile from './pages/Profile.jsx';
 
 export default function App() {
   return (
@@ -17,6 +18,14 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <Home />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <Profile />
               </ProtectedRoute>
             }
           />
