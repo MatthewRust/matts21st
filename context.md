@@ -86,11 +86,17 @@ Note: `npm install` has not been run yet — there are no `package-lock.json` fi
 
 ## Database schema
 
-Defined in `backend/db/init.sql`, auto-applied by the `postgres:16-alpine` image on first volume init. Tables:
+Defined in `backend/db/init.sql`, auto-applied by the `postgres:16-alpine` image on first volume init. Schema was designed via draw.io ER diagram and implemented on 2026-05-11.
 
-- `event_info(id, title, body, display_order, created_at)` — content rendered on the homepage. Seeded with three placeholder rows (When / Where / Dress code) that should be edited directly in the DB or via a future admin UI.
-- `travel_arrangements(id, name, mode, departure_location, departure_time, seats_available, notes, created_at)` — lifts/rides offered or requested.
-- `pictures(id, uploader_name, caption, filename, url, uploaded_at)` — uploaded photo metadata. Files themselves live on disk in `backend/uploads/` (mounted as a bind volume in compose, served at `/uploads/<filename>`).
+**Tables:**
+
+- `event_info(id, title, body, display_order, created_at)` — static content for the homepage. Seeded with When/Where/Dress code rows; edit directly in DB or via a future admin UI.
+
+- `users(user_id, username, password, profile_pic_url, driver, car_id, public_transport_id)` — every guest who registers. `driver` boolean flags whether they offer a car. `car_id` is set when a driver creates a car or a passenger joins one. `public_transport_id` is nullable, reserved for future public-transport linking. Passwords are stored **plain text** for now — hashing (bcrypt) must be added before public deployment.
+
+- `cars(car_id, driver_id, max_num_passenger, current_num_passenger, description)` — one row per car offered. `driver_id` → `users.user_id`. There is a circular FK: `users.car_id` → `cars.car_id`; handled in `init.sql` via `ALTER TABLE … ADD CONSTRAINT` inside a `DO $$` block run after both tables exist.
+
+- `pictures(picture_id, uploader_id, description, url, filename, upload_time)` — photo metadata. `uploader_id` → `users.user_id`. Files live on disk in `backend/uploads/`, served at `/uploads/<filename>`.
 
 If you change `init.sql`, you must `docker compose down -v` to re-trigger initialisation — the script only runs on an empty data volume.
 
@@ -108,23 +114,28 @@ Postgres credentials in `docker-compose.yml` default to `matts21st` / `devpasswo
 
 ## API surface (current)
 
-| Method | Path                | Purpose                                           |
-| ------ | ------------------- | ------------------------------------------------- |
-| GET    | `/api/health`       | Liveness + DB ping                                |
-| GET    | `/api/info`         | List event info entries                           |
-| GET    | `/api/travel`       | List travel arrangements                          |
-| POST   | `/api/travel`       | Create a travel arrangement (JSON body)           |
-| GET    | `/api/pictures`     | List uploaded pictures (metadata)                 |
-| POST   | `/api/pictures`     | Upload a picture (multipart, field name `image`)  |
-| GET    | `/uploads/:file`    | Static file serving for uploaded images           |
+| Method | Path                  | Purpose                                                         |
+| ------ | --------------------- | --------------------------------------------------------------- |
+| GET    | `/api/health`         | Liveness + DB ping                                              |
+| GET    | `/api/info`           | List event info entries                                         |
+| GET    | `/api/users`          | List users (passwords excluded)                                 |
+| GET    | `/api/users/:id`      | Get single user                                                 |
+| POST   | `/api/users`          | Create user `{ username, password, driver?, profile_pic_url? }` |
+| GET    | `/api/cars`           | List cars (includes driver username)                            |
+| GET    | `/api/cars/:id`       | Get single car                                                  |
+| POST   | `/api/cars`           | Create car `{ driver_id, max_num_passenger, description? }`     |
+| POST   | `/api/cars/:id/join`  | Passenger joins car `{ user_id }` — increments passenger count  |
+| GET    | `/api/pictures`       | List pictures (includes uploader username)                      |
+| POST   | `/api/pictures`       | Upload picture (multipart: `image` file + `uploader_id` + `description?`) |
+| GET    | `/uploads/:file`      | Static file serving for uploaded images                         |
 
-No auth yet. Anyone who can reach the backend can post travel and upload images. That's fine for local dev; **must** be addressed before this is exposed publicly (rate limiting at minimum, ideally a guest token / passcode).
+No auth yet. Anyone who can reach the backend can call any endpoint. **Must** be addressed before public deployment.
 
 ## What is intentionally not built yet
 
-- No auth / guest-passcode gating
+- No auth / guest-passcode gating — **passwords stored in plain text**, bcrypt hashing needed before deployment
 - No admin UI for editing `event_info` (edit DB directly for now)
-- No travel UI on the frontend — only the info section is wired up; `App.jsx` has placeholder cards for travel and pictures
+- No frontend UI for users/cars/pictures — `App.jsx` has placeholder cards only; all three features are API-only
 - No image thumbnails, no virus scanning, no S3 — uploads land on the backend container's local disk
 - No tests
 - No production Dockerfiles — current frontend image runs the Vite dev server, not a static build behind nginx

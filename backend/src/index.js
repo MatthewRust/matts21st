@@ -3,7 +3,8 @@ import express from 'express';
 import cors from 'cors';
 import { pool } from './db.js';
 import infoRouter from './routes/info.js';
-import travelRouter from './routes/travel.js';
+import usersRouter from './routes/users.js';
+import carsRouter from './routes/cars.js';
 import picturesRouter from './routes/pictures.js';
 
 const app = express();
@@ -23,7 +24,8 @@ app.get('/api/health', async (_req, res) => {
 });
 
 app.use('/api/info', infoRouter);
-app.use('/api/travel', travelRouter);
+app.use('/api/users', usersRouter);
+app.use('/api/cars', carsRouter);
 app.use('/api/pictures', picturesRouter);
 
 app.listen(port, () => {
