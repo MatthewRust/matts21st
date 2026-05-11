@@ -4,31 +4,39 @@ import { pool } from '../db.js';
 const router = Router();
 
 // List all cars with driver info
-router.get('/', async (_req, res) => {
-  const { rows } = await pool.query(`
-    SELECT c.*, u.username AS driver_name
-    FROM cars c
-    JOIN users u ON u.user_id = c.driver_id
-    ORDER BY c.car_id ASC
-  `);
-  res.json(rows);
+router.get('/', async (_req, res, next) => {
+  try {
+    const { rows } = await pool.query(`
+      SELECT c.*, u.username AS driver_name
+      FROM cars c
+      JOIN users u ON u.user_id = c.driver_id
+      ORDER BY c.car_id ASC
+    `);
+    res.json(rows);
+  } catch (err) {
+    next(err);
+  }
 });
 
 // Get single car
-router.get('/:id', async (req, res) => {
-  const { rows } = await pool.query(
-    `SELECT c.*, u.username AS driver_name
-     FROM cars c JOIN users u ON u.user_id = c.driver_id
-     WHERE c.car_id = $1`,
-    [req.params.id]
-  );
-  if (!rows.length) return res.status(404).json({ error: 'Car not found' });
-  res.json(rows[0]);
+router.get('/:id', async (req, res, next) => {
+  try {
+    const { rows } = await pool.query(
+      `SELECT c.*, u.username AS driver_name
+       FROM cars c JOIN users u ON u.user_id = c.driver_id
+       WHERE c.car_id = $1`,
+      [req.params.id]
+    );
+    if (!rows.length) return res.status(404).json({ error: 'Car not found' });
+    res.json(rows[0]);
+  } catch (err) {
+    next(err);
+  }
 });
 
 // Create a car (driver_id must exist and have driver = true)
-router.post('/', async (req, res) => {
-  const { driver_id, max_num_passenger, description } = req.body;
+router.post('/', async (req, res, next) => {
+  const { driver_id, max_num_passenger, description, departure_time, departure_location } = req.body;
   if (!driver_id || !max_num_passenger) {
     return res.status(400).json({ error: 'driver_id and max_num_passenger are required' });
   }
@@ -51,9 +59,9 @@ router.post('/', async (req, res) => {
     }
 
     const { rows } = await client.query(
-      `INSERT INTO cars (driver_id, max_num_passenger, description)
-       VALUES ($1, $2, $3) RETURNING *`,
-      [driver_id, max_num_passenger, description || null]
+      `INSERT INTO cars (driver_id, max_num_passenger, description, departure_time, departure_location)
+       VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+      [driver_id, max_num_passenger, description || null, departure_time || null, departure_location || null]
     );
     const car = rows[0];
 
@@ -64,14 +72,14 @@ router.post('/', async (req, res) => {
     res.status(201).json(car);
   } catch (err) {
     await client.query('ROLLBACK');
-    throw err;
+    next(err);
   } finally {
     client.release();
   }
 });
 
 // Join a car as a passenger (increments current_num_passenger, links user)
-router.post('/:id/join', async (req, res) => {
+router.post('/:id/join', async (req, res, next) => {
   const { user_id } = req.body;
   if (!user_id) return res.status(400).json({ error: 'user_id is required' });
 
@@ -104,7 +112,7 @@ router.post('/:id/join', async (req, res) => {
     res.json(rows[0]);
   } catch (err) {
     await client.query('ROLLBACK');
-    throw err;
+    next(err);
   } finally {
     client.release();
   }

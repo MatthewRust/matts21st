@@ -24,7 +24,9 @@ CREATE TABLE IF NOT EXISTS cars (
   driver_id INTEGER NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
   max_num_passenger INTEGER NOT NULL,
   current_num_passenger INTEGER NOT NULL DEFAULT 0,
-  description VARCHAR
+  description VARCHAR,
+  departure_time TIMESTAMPTZ,
+  departure_location VARCHAR
 );
 
 -- Close the circular ref: users.car_id → cars
