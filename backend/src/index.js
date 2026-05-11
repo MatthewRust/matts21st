@@ -7,6 +7,7 @@ import usersRouter from './routes/users.js';
 import carsRouter from './routes/cars.js';
 import picturesRouter from './routes/pictures.js';
 import authRouter from './routes/auth.js';
+import drinksRouter from './routes/drinks.js';
 
 const app = express();
 const port = process.env.PORT || 3001;
@@ -29,6 +30,7 @@ app.use('/api/users', usersRouter);
 app.use('/api/cars', carsRouter);
 app.use('/api/pictures', picturesRouter);
 app.use('/api/auth', authRouter);
+app.use('/api/drinks', drinksRouter);
 
 // Global error handler — keeps the process alive and returns a JSON error
 app.use((err, _req, res, _next) => {

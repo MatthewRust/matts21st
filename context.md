@@ -104,7 +104,7 @@ Defined in `backend/db/init.sql`, auto-applied by the `postgres:16-alpine` image
 
 - `event_info(id, title, body, display_order, created_at)` — static content for the homepage. Seeded with When/Where/Dress code rows; edit directly in DB or via a future admin UI.
 
-- `users(user_id, username, password, profile_pic_url, driver, car_id, public_transport_id)` — every guest who registers. `driver` boolean flags whether they offer a car. `car_id` is set when a driver creates a car or a passenger joins one. `public_transport_id` is nullable, reserved for future public-transport linking. Passwords are stored **plain text** for now — hashing (bcrypt) must be added before public deployment.
+- `users(user_id, username, password, profile_pic_url, driver, car_id, public_transport_id, ex_drinks, drink_num)` — every guest who registers. `ex_drinks` (nullable INTEGER) is the self-reported expected number of drinks, set optionally at signup. `drink_num` (INTEGER NOT NULL DEFAULT 0) is the live running tally, incremented/decremented via `PATCH /api/drinks/:id`. `driver` boolean flags whether they offer a car. `car_id` is set when a driver creates a car or a passenger joins one. `public_transport_id` is nullable, reserved for future public-transport linking. Passwords are stored **plain text** for now — hashing (bcrypt) must be added before public deployment.
 
 - `cars(car_id, driver_id, max_num_passenger, current_num_passenger, description, departure_time, departure_location)` — one row per car offered. `driver_id` → `users.user_id`. `departure_time` (TIMESTAMPTZ) and `departure_location` (VARCHAR) are both nullable and captured from the signup form. There is a circular FK: `users.car_id` → `cars.car_id`; handled in `init.sql` via `ALTER TABLE … ADD CONSTRAINT` inside a `DO $$` block run after both tables exist.
 
@@ -134,6 +134,8 @@ Postgres credentials in `docker-compose.yml` default to `matts21st` / `devpasswo
 | GET    | `/api/users/:id`      | Get single user                                                 |
 | POST   | `/api/users`          | Create user `{ username, password, driver?, profile_pic_url? }` |
 | POST   | `/api/auth/login`     | Authenticate `{ username, password }` → user object (no password) or 401 |
+| GET    | `/api/drinks/:id`     | Fetch `{ drink_num, ex_drinks }` for a user                              |
+| PATCH  | `/api/drinks/:id`     | `{ action: 'increment' \| 'decrement' }` → updated `{ drink_num, ex_drinks }`. Decrement floors at 0. |
 | GET    | `/api/cars`           | List cars (includes driver username)                            |
 | GET    | `/api/cars/:id`       | Get single car                                                  |
 | POST   | `/api/cars`           | Create car `{ driver_id, max_num_passenger, description?, departure_time?, departure_location? }` |
@@ -152,6 +154,7 @@ Postgres credentials in `docker-compose.yml` default to `matts21st` / `devpasswo
 | `/signup`  | `Signup`   | Invitation-styled form. `driver` checkbox reveals car fields. Calls `auth.signup()` which chains `POST /api/users` then (if driver) `POST /api/cars`. |
 | `/`        | `Home`     | Protected. Event info + placeholder cards. Header shows username + user-icon button (top-right) that links to `/profile`. |
 | `/profile` | `Profile`  | Protected. Invitation card showing profile picture (with SVG fallback), username, driver/guest status, and (if driver) live car details fetched from `GET /api/cars/:id`. **Edit** button is a disabled stub. **Logout** button calls `auth.logout()` and redirects to `/login`. |
+| `/drinks`  | `DrinkIncrementer` | Protected. Parchment card with `pint.jpg` flanked by − and + buttons. Each press fires `PATCH /api/drinks/:id` immediately (optimistic UI, rolls back on error). Shows running total; if `ex_drinks` is set shows `"X of Y planned"`. |
 
 ## Frontend styling system
 
@@ -162,6 +165,7 @@ Postgres credentials in `docker-compose.yml` default to `matts21st` / `devpasswo
   - `.bg-tartan` — tiled `hamiltonTartan.png` (preferred; preserves pattern)
   - `.bg-tartan-stretch` — stretched, available as fallback
 - `.bg-parchment` — cream invitation paper colour with subtle radial gradients
+- `<Navbar>` — shared top navigation bar (`components/Navbar.jsx`) used on all protected pages (Home, Profile, Drinks). Dark `stone-950` strip with Cormorant Garamond text. Links: "Matt's 21st" title → `/`, "Home", "The Tally", profile icon → `/profile`. Active link highlighted in amber. Uses `useLocation` for active-state detection.
 - `<InvitationCard>` — wrapper component (`components/InvitationCard.jsx`) that applies parchment + shadow + slight rotation. Login uses `-rotate-2`, Signup uses `rotate-[1.5deg]`. Exports `inviteInputClass`, `inviteLabelClass`, and `inviteButtonClass` for consistent form styling (transparent inputs with bottom-border-only "lines to write on", small-caps serif labels, wax-seal-style red submit buttons).
 
 ## What is intentionally not built yet

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import InvitationCard, { inviteLabelClass, inviteButtonClass } from '../components/InvitationCard.jsx';
+import Navbar from '../components/Navbar.jsx';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
@@ -56,7 +57,9 @@ export default function Profile() {
     : null;
 
   return (
-    <div className="min-h-screen bg-tartan p-6 sm:p-12 flex items-center">
+    <div className="min-h-screen bg-tartan flex flex-col">
+      <Navbar />
+      <div className="flex-1 flex items-center justify-center p-6 sm:p-12">
       <InvitationCard tilt="rotate-[1deg]" maxWidth="max-w-xl">
 
         {/* Profile picture */}
@@ -125,6 +128,7 @@ export default function Profile() {
         </div>
 
       </InvitationCard>
+      </div>
     </div>
   );
 }

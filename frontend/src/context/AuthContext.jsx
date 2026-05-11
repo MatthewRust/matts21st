@@ -16,10 +16,30 @@ export function AuthProvider({ children }) {
     }
   });
 
+  // Persist user to localStorage whenever it changes
   useEffect(() => {
     if (user) localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
     else localStorage.removeItem(STORAGE_KEY);
   }, [user]);
+
+  // On mount: verify the stored user still exists in the DB.
+  // If the DB was wiped (docker compose down -v) the stored ID is stale — clear it.
+  useEffect(() => {
+    if (!user) return;
+    fetch(`${API_URL}/api/users/${user.user_id}`)
+      .then((r) => {
+        if (r.status === 404) {
+          // User no longer exists — clear the stale session silently
+          setUser(null);
+        }
+      })
+      .catch(() => {
+        // Network error / server down — leave the session alone and let
+        // individual pages handle their own errors
+      });
+    // Only runs once on mount (user ref is stable at that point)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function login(username, password) {
     const res = await fetch(`${API_URL}/api/auth/login`, {
@@ -36,12 +56,12 @@ export function AuthProvider({ children }) {
     return data;
   }
 
-  async function signup({ username, password, driver, car }) {
+  async function signup({ username, password, driver, car, ex_drinks }) {
     // 1. Create the user
     const userRes = await fetch(`${API_URL}/api/users`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password, driver }),
+      body: JSON.stringify({ username, password, driver, ex_drinks: ex_drinks || null }),
     });
     if (!userRes.ok) {
       const { error } = await userRes.json().catch(() => ({}));
