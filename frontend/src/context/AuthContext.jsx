@@ -56,12 +56,18 @@ export function AuthProvider({ children }) {
     return data;
   }
 
-  async function signup({ username, password, driver, car, ex_drinks }) {
+  async function signup({ username, password, driver, car, ex_drinks, exp_arrival_date }) {
     // 1. Create the user
     const userRes = await fetch(`${API_URL}/api/users`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password, driver, ex_drinks: ex_drinks || null }),
+      body: JSON.stringify({
+        username,
+        password,
+        driver,
+        ex_drinks: ex_drinks != null ? Number(ex_drinks) : null,
+        exp_arrival_date: exp_arrival_date || null,
+      }),
     });
     if (!userRes.ok) {
       const { error } = await userRes.json().catch(() => ({}));
@@ -94,12 +100,17 @@ export function AuthProvider({ children }) {
     return createdUser;
   }
 
+  // Update the stored user after a profile edit
+  function updateUser(updatedUser) {
+    setUser(updatedUser);
+  }
+
   function logout() {
     setUser(null);
   }
 
   return (
-    <AuthContext.Provider value={{ user, login, signup, logout }}>
+    <AuthContext.Provider value={{ user, login, signup, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
   );
