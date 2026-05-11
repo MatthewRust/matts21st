@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
 export default function Home() {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const [info, setInfo] = useState([]);
 
   useEffect(() => {
@@ -19,10 +21,15 @@ export default function Home() {
       <div className="flex items-center justify-between px-6 py-3 bg-black/30 text-sm">
         <span className="font-invite tracking-wider">Logged in as {user?.username}</span>
         <button
-          onClick={logout}
-          className="font-invite uppercase tracking-widest text-xs px-3 py-1 border border-white/40 rounded hover:bg-white/10"
+          onClick={() => navigate('/profile')}
+          title="Your profile"
+          aria-label="Go to your profile"
+          className="p-1.5 rounded-full text-white/70 hover:text-white hover:bg-white/10 transition"
         >
-          Log out
+          {/* User silhouette icon */}
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
+            <path fillRule="evenodd" d="M7.5 6a4.5 4.5 0 1 1 9 0 4.5 4.5 0 0 1-9 0ZM3.751 20.105a8.25 8.25 0 0 1 16.498 0 .75.75 0 0 1-.437.695A18.683 18.683 0 0 1 12 22.5c-2.786 0-5.433-.608-7.812-1.7a.75.75 0 0 1-.437-.695Z" clipRule="evenodd" />
+          </svg>
         </button>
       </div>
 

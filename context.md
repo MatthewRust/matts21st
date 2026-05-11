@@ -150,7 +150,8 @@ Postgres credentials in `docker-compose.yml` default to `matts21st` / `devpasswo
 | ---------- | ---------- | ---------------------------------------------------------- |
 | `/login`   | `Login`    | Invitation-styled form. Calls `auth.login()`.              |
 | `/signup`  | `Signup`   | Invitation-styled form. `driver` checkbox reveals car fields. Calls `auth.signup()` which chains `POST /api/users` then (if driver) `POST /api/cars`. |
-| `/`        | `Home`     | Protected. Event info + placeholder cards. Header has logout. |
+| `/`        | `Home`     | Protected. Event info + placeholder cards. Header shows username + user-icon button (top-right) that links to `/profile`. |
+| `/profile` | `Profile`  | Protected. Invitation card showing profile picture (with SVG fallback), username, driver/guest status, and (if driver) live car details fetched from `GET /api/cars/:id`. **Edit** button is a disabled stub. **Logout** button calls `auth.logout()` and redirects to `/login`. |
 
 ## Frontend styling system
 
@@ -168,7 +169,9 @@ Postgres credentials in `docker-compose.yml` default to `matts21st` / `devpasswo
 - **Passwords stored in plain text** — bcrypt hashing needed before deployment
 - **Auth is client-side only** — backend endpoints (other than `/api/auth/login`) are not protected; anyone hitting the API directly bypasses the React-side `ProtectedRoute`
 - No admin UI for editing `event_info` (edit DB directly for now)
-- No frontend UI for travel/pictures yet — `Home.jsx` has placeholder cards. Login/Signup are the only fully-built pages.
+- No frontend UI for travel/pictures yet — `Home.jsx` has placeholder cards.
+- Profile **Edit** button is a disabled stub — editing user details is not yet implemented.
+- No profile picture upload — `profile_pic_url` defaults to `'default_pic.png'` (non-existent file); the profile page SVG avatar fallback fires automatically.
 - No image thumbnails, no virus scanning, no S3 — uploads land on the backend container's local disk
 - No tests
 - No production Dockerfiles — current frontend image runs the Vite dev server, not a static build behind nginx
