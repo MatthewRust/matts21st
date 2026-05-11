@@ -3,7 +3,9 @@ import { pool } from '../db.js';
 
 const router = Router();
 
-// List all cars with driver info and passengers (excluding the driver themselves)
+// List all cars with driver info and passengers (excluding the driver themselves).
+// Uses a correlated subquery for passengers to avoid GROUP BY / type-coercion
+// issues that arise when mixing json_agg with a LEFT JOIN approach.
 router.get('/', async (_req, res, next) => {
   try {
     const { rows } = await pool.query(`
@@ -11,20 +13,27 @@ router.get('/', async (_req, res, next) => {
         c.*,
         u.username        AS driver_name,
         u.profile_pic_url AS driver_profile_pic_url,
-        COALESCE(
-          json_agg(
-            json_build_object(
-              'user_id',         p.user_id,
-              'username',        p.username,
-              'profile_pic_url', p.profile_pic_url
-            )
-          ) FILTER (WHERE p.user_id IS NOT NULL AND p.user_id <> c.driver_id),
-          '[]'
+        (
+          SELECT COALESCE(
+            json_agg(
+              json_build_object(
+                'user_id',         p.user_id,
+                'username',        p.username,
+                'profile_pic_url', p.profile_pic_url
+              )
+            ),
+            '[]'::json
+          )
+          FROM users p
+          WHERE p.car_id = c.car_id
+            AND p.user_id <> c.driver_id
         ) AS passengers
       FROM cars c
-      JOIN users u       ON u.user_id = c.driver_id
-      LEFT JOIN users p  ON p.car_id  = c.car_id
-      GROUP BY c.car_id, u.username, u.profile_pic_url
+      -- Only include cars whose driver still claims this car as their current one.
+      -- When a driver toggles off "driver" in their profile, their users.car_id
+      -- is cleared but the cars row itself isn't always removed — this filter
+      -- hides those orphan rows from the listing.
+      JOIN users u ON u.user_id = c.driver_id AND u.car_id = c.car_id
       ORDER BY c.car_id ASC
     `);
     res.json(rows);
@@ -72,6 +81,11 @@ router.post('/', async (req, res, next) => {
       await client.query('ROLLBACK');
       return res.status(400).json({ error: 'User is not marked as a driver' });
     }
+
+    // Remove any pre-existing cars for this driver to prevent orphan accumulation.
+    // (Each driver only ever owns one car at a time; the FK ON DELETE SET NULL
+    // will clear car_id on the driver and any passengers automatically.)
+    await client.query('DELETE FROM cars WHERE driver_id = $1', [driver_id]);
 
     const { rows } = await client.query(
       `INSERT INTO cars (driver_id, max_num_passenger, description, departure_time, departure_location)

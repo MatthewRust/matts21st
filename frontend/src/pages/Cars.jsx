@@ -48,6 +48,8 @@ function formatDeparture(iso) {
 // ─── Single car row ──────────────────────────────────────────────────────────
 
 function CarRow({ car, onOpen, tilt }) {
+  // Defensive: ensure passengers is always an array regardless of what the API returns
+  const passengers = Array.isArray(car.passengers) ? car.passengers : [];
   const driverPseudoUser = {
     username: car.driver_name,
     profile_pic_url: car.driver_profile_pic_url,
@@ -85,11 +87,11 @@ function CarRow({ car, onOpen, tilt }) {
         <p className={`${inviteLabelClass} mb-1`}>
           {car.current_num_passenger} / {car.max_num_passenger} seats taken
         </p>
-        {car.passengers.length === 0 ? (
+        {passengers.length === 0 ? (
           <p className="font-hand text-xl text-stone-500">No passengers yet</p>
         ) : (
           <div className="flex flex-wrap gap-3">
-            {car.passengers.map((p) => (
+            {passengers.map((p) => (
               <div key={p.user_id} className="flex flex-col items-center w-14">
                 <Avatar user={p} size="w-10 h-10" ring="ring-2 ring-stone-400/60" />
                 <p className="font-hand text-sm text-stone-700 truncate w-full text-center mt-0.5">
@@ -107,6 +109,7 @@ function CarRow({ car, onOpen, tilt }) {
 // ─── Modal contents ──────────────────────────────────────────────────────────
 
 function CarDetails({ car, user, onAction, submitting, error }) {
+  const passengers = Array.isArray(car.passengers) ? car.passengers : [];
   const driverPseudoUser = {
     username: car.driver_name,
     profile_pic_url: car.driver_profile_pic_url,
@@ -172,11 +175,11 @@ function CarDetails({ car, user, onAction, submitting, error }) {
 
       <div className="mb-6">
         <p className={`${inviteLabelClass} mb-2`}>Passengers</p>
-        {car.passengers.length === 0 ? (
+        {passengers.length === 0 ? (
           <p className="font-hand text-xl text-stone-500">No one's joined yet.</p>
         ) : (
           <div className="flex flex-wrap gap-4">
-            {car.passengers.map((p) => (
+            {passengers.map((p) => (
               <div key={p.user_id} className="flex flex-col items-center w-16">
                 <Avatar user={p} size="w-12 h-12" ring="ring-2 ring-stone-400/60" />
                 <p className="font-hand text-base text-stone-800 truncate w-full text-center mt-1">
