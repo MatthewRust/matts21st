@@ -28,7 +28,7 @@ router.get('/:id', async (req, res) => {
 
 // Create a car (driver_id must exist and have driver = true)
 router.post('/', async (req, res) => {
-  const { driver_id, max_num_passenger, description } = req.body;
+  const { driver_id, max_num_passenger, description, departure_time, departure_location } = req.body;
   if (!driver_id || !max_num_passenger) {
     return res.status(400).json({ error: 'driver_id and max_num_passenger are required' });
   }
@@ -51,9 +51,9 @@ router.post('/', async (req, res) => {
     }
 
     const { rows } = await client.query(
-      `INSERT INTO cars (driver_id, max_num_passenger, description)
-       VALUES ($1, $2, $3) RETURNING *`,
-      [driver_id, max_num_passenger, description || null]
+      `INSERT INTO cars (driver_id, max_num_passenger, description, departure_time, departure_location)
+       VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+      [driver_id, max_num_passenger, description || null, departure_time || null, departure_location || null]
     );
     const car = rows[0];
 

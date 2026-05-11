@@ -6,6 +6,7 @@ import infoRouter from './routes/info.js';
 import usersRouter from './routes/users.js';
 import carsRouter from './routes/cars.js';
 import picturesRouter from './routes/pictures.js';
+import authRouter from './routes/auth.js';
 
 const app = express();
 const port = process.env.PORT || 3001;
@@ -27,6 +28,7 @@ app.use('/api/info', infoRouter);
 app.use('/api/users', usersRouter);
 app.use('/api/cars', carsRouter);
 app.use('/api/pictures', picturesRouter);
+app.use('/api/auth', authRouter);
 
 app.listen(port, () => {
   console.log(`Backend listening on http://localhost:${port}`);

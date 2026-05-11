@@ -8,7 +8,7 @@ A small web app for guests of Matt's 21st birthday. It gives attendees a single 
 
 ## Stack
 
-- **Frontend** — React 18 + Vite + Tailwind CSS, in `frontend/`
+- **Frontend** — React 18 + Vite + Tailwind CSS + react-router-dom 6, in `frontend/`
 - **Backend** — Node.js (ESM) + Express + `pg` + `multer`, in `backend/`
 - **Database** — PostgreSQL 16
 - **Containerisation** — Docker Compose orchestrates `frontend`, `backend`, and `db`
@@ -31,8 +31,10 @@ A small web app for guests of Matt's 21st birthday. It gives attendees a single 
 │       ├── db.js               # pg pool
 │       └── routes/
 │           ├── info.js         # GET /api/info
-│           ├── travel.js       # GET/POST /api/travel
-│           └── pictures.js     # GET /api/pictures, POST /api/pictures (multipart)
+│           ├── users.js        # /api/users
+│           ├── cars.js         # /api/cars (+ /:id/join)
+│           ├── pictures.js     # /api/pictures (multipart upload)
+│           └── auth.js         # POST /api/auth/login
 └── frontend/
     ├── Dockerfile
     ├── package.json
@@ -42,8 +44,18 @@ A small web app for guests of Matt's 21st birthday. It gives attendees a single 
     ├── index.html
     └── src/
         ├── main.jsx
-        ├── App.jsx
-        └── index.css
+        ├── App.jsx              # router shell (BrowserRouter + AuthProvider)
+        ├── index.css            # Google Fonts + tartan + parchment utilities
+        ├── assets/images/hamiltonTartan.png
+        ├── context/
+        │   └── AuthContext.jsx  # localStorage-backed auth + login/signup/logout
+        ├── components/
+        │   ├── ProtectedRoute.jsx
+        │   └── InvitationCard.jsx
+        └── pages/
+            ├── Home.jsx         # event info homepage (protected)
+            ├── Login.jsx        # invitation-styled login form
+            └── Signup.jsx       # invitation-styled signup + optional car form
 ```
 
 ## Running locally (Windows / PowerShell)
@@ -94,7 +106,7 @@ Defined in `backend/db/init.sql`, auto-applied by the `postgres:16-alpine` image
 
 - `users(user_id, username, password, profile_pic_url, driver, car_id, public_transport_id)` — every guest who registers. `driver` boolean flags whether they offer a car. `car_id` is set when a driver creates a car or a passenger joins one. `public_transport_id` is nullable, reserved for future public-transport linking. Passwords are stored **plain text** for now — hashing (bcrypt) must be added before public deployment.
 
-- `cars(car_id, driver_id, max_num_passenger, current_num_passenger, description)` — one row per car offered. `driver_id` → `users.user_id`. There is a circular FK: `users.car_id` → `cars.car_id`; handled in `init.sql` via `ALTER TABLE … ADD CONSTRAINT` inside a `DO $$` block run after both tables exist.
+- `cars(car_id, driver_id, max_num_passenger, current_num_passenger, description, departure_time, departure_location)` — one row per car offered. `driver_id` → `users.user_id`. `departure_time` (TIMESTAMPTZ) and `departure_location` (VARCHAR) are both nullable and captured from the signup form. There is a circular FK: `users.car_id` → `cars.car_id`; handled in `init.sql` via `ALTER TABLE … ADD CONSTRAINT` inside a `DO $$` block run after both tables exist.
 
 - `pictures(picture_id, uploader_id, description, url, filename, upload_time)` — photo metadata. `uploader_id` → `users.user_id`. Files live on disk in `backend/uploads/`, served at `/uploads/<filename>`.
 
@@ -121,21 +133,42 @@ Postgres credentials in `docker-compose.yml` default to `matts21st` / `devpasswo
 | GET    | `/api/users`          | List users (passwords excluded)                                 |
 | GET    | `/api/users/:id`      | Get single user                                                 |
 | POST   | `/api/users`          | Create user `{ username, password, driver?, profile_pic_url? }` |
+| POST   | `/api/auth/login`     | Authenticate `{ username, password }` → user object (no password) or 401 |
 | GET    | `/api/cars`           | List cars (includes driver username)                            |
 | GET    | `/api/cars/:id`       | Get single car                                                  |
-| POST   | `/api/cars`           | Create car `{ driver_id, max_num_passenger, description? }`     |
+| POST   | `/api/cars`           | Create car `{ driver_id, max_num_passenger, description?, departure_time?, departure_location? }` |
 | POST   | `/api/cars/:id/join`  | Passenger joins car `{ user_id }` — increments passenger count  |
 | GET    | `/api/pictures`       | List pictures (includes uploader username)                      |
 | POST   | `/api/pictures`       | Upload picture (multipart: `image` file + `uploader_id` + `description?`) |
 | GET    | `/uploads/:file`      | Static file serving for uploaded images                         |
 
-No auth yet. Anyone who can reach the backend can call any endpoint. **Must** be addressed before public deployment.
+**Auth is frontend-only.** `/api/auth/login` verifies plain-text passwords and returns the user record; the frontend stores it in `localStorage` under `matts21st.user` via `AuthContext` (`frontend/src/context/AuthContext.jsx`) and uses it to gate the `/` route via `ProtectedRoute`. The backend still does not enforce auth on any other endpoint — anyone hitting the API directly bypasses the gate. Server-side enforcement (middleware checking a session/token, plus bcrypt password hashing) is still required before public deployment.
+
+## Frontend routes
+
+| Path       | Component  | Notes                                                      |
+| ---------- | ---------- | ---------------------------------------------------------- |
+| `/login`   | `Login`    | Invitation-styled form. Calls `auth.login()`.              |
+| `/signup`  | `Signup`   | Invitation-styled form. `driver` checkbox reveals car fields. Calls `auth.signup()` which chains `POST /api/users` then (if driver) `POST /api/cars`. |
+| `/`        | `Home`     | Protected. Event info + placeholder cards. Header has logout. |
+
+## Frontend styling system
+
+- Fonts loaded from Google Fonts in `index.css`:
+  - `font-invite` — Cormorant Garamond (serif, for headings and labels)
+  - `font-hand` — Caveat (handwriting, for input contents and incidental copy)
+- Tartan background utilities in `index.css`:
+  - `.bg-tartan` — tiled `hamiltonTartan.png` (preferred; preserves pattern)
+  - `.bg-tartan-stretch` — stretched, available as fallback
+- `.bg-parchment` — cream invitation paper colour with subtle radial gradients
+- `<InvitationCard>` — wrapper component (`components/InvitationCard.jsx`) that applies parchment + shadow + slight rotation. Login uses `-rotate-2`, Signup uses `rotate-[1.5deg]`. Exports `inviteInputClass`, `inviteLabelClass`, and `inviteButtonClass` for consistent form styling (transparent inputs with bottom-border-only "lines to write on", small-caps serif labels, wax-seal-style red submit buttons).
 
 ## What is intentionally not built yet
 
-- No auth / guest-passcode gating — **passwords stored in plain text**, bcrypt hashing needed before deployment
+- **Passwords stored in plain text** — bcrypt hashing needed before deployment
+- **Auth is client-side only** — backend endpoints (other than `/api/auth/login`) are not protected; anyone hitting the API directly bypasses the React-side `ProtectedRoute`
 - No admin UI for editing `event_info` (edit DB directly for now)
-- No frontend UI for users/cars/pictures — `App.jsx` has placeholder cards only; all three features are API-only
+- No frontend UI for travel/pictures yet — `Home.jsx` has placeholder cards. Login/Signup are the only fully-built pages.
 - No image thumbnails, no virus scanning, no S3 — uploads land on the backend container's local disk
 - No tests
 - No production Dockerfiles — current frontend image runs the Vite dev server, not a static build behind nginx
