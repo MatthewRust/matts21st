@@ -3,7 +3,8 @@ import { pool } from '../db.js';
 
 const router = Router();
 
-const PUBLIC_COLS = 'user_id, username, profile_pic_url, driver, car_id, public_transport_id, drink_num, ex_drinks';
+const PUBLIC_COLS =
+  'user_id, username, profile_pic_url, driver, car_id, public_transport_id, ex_drinks, daily_drinks, total_drinks';
 
 // List all users (passwords excluded)
 router.get('/', async (_req, res, next) => {

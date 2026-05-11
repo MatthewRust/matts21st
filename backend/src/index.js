@@ -9,6 +9,7 @@ import picturesRouter from './routes/pictures.js';
 import authRouter from './routes/auth.js';
 import drinksRouter from './routes/drinks.js';
 import leaderboardRouter from './routes/leaderboard.js';
+import { startCronJobs } from './cron.js';
 
 const app = express();
 const port = process.env.PORT || 3001;
@@ -43,4 +44,5 @@ app.use((err, _req, res, _next) => {
 
 app.listen(port, () => {
   console.log(`Backend listening on http://localhost:${port}`);
+  startCronJobs();
 });
