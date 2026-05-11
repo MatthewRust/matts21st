@@ -104,7 +104,7 @@ Defined in `backend/db/init.sql`, auto-applied by the `postgres:16-alpine` image
 
 - `event_info(id, title, body, display_order, created_at)` — static content for the homepage. Seeded with When/Where/Dress code rows; edit directly in DB or via a future admin UI.
 
-- `users(user_id, username, password, profile_pic_url, driver, car_id, public_transport_id, ex_drinks, drink_num)` — every guest who registers. `ex_drinks` (nullable INTEGER) is the self-reported expected number of drinks, set optionally at signup. `drink_num` (INTEGER NOT NULL DEFAULT 0) is the live running tally, incremented/decremented via `PATCH /api/drinks/:id`. `driver` boolean flags whether they offer a car. `car_id` is set when a driver creates a car or a passenger joins one. `public_transport_id` is nullable, reserved for future public-transport linking. Passwords are stored **plain text** for now — hashing (bcrypt) must be added before public deployment.
+- `users(user_id, username, password, profile_pic_url, driver, car_id, public_transport_id, ex_drinks, daily_drinks, total_drinks)` — every guest who registers. `ex_drinks` (nullable INTEGER) is the self-reported expected number of drinks set at signup. `daily_drinks` (INTEGER NOT NULL DEFAULT 0) is the live per-day tally incremented via `PATCH /api/drinks/:id`; it resets to 0 at 23:59:59 each night via the server-side cron job. `total_drinks` (INTEGER NOT NULL DEFAULT 0) is the cumulative all-time count — it receives `daily_drinks` added to it each night before the reset. `driver` boolean flags whether they offer a car. `car_id` is set when a driver creates a car or a passenger joins one. `public_transport_id` is nullable, reserved for future public-transport linking. Passwords are stored **plain text** for now — hashing (bcrypt) must be added before public deployment.
 
 - `cars(car_id, driver_id, max_num_passenger, current_num_passenger, description, departure_time, departure_location)` — one row per car offered. `driver_id` → `users.user_id`. `departure_time` (TIMESTAMPTZ) and `departure_location` (VARCHAR) are both nullable and captured from the signup form. There is a circular FK: `users.car_id` → `cars.car_id`; handled in `init.sql` via `ALTER TABLE … ADD CONSTRAINT` inside a `DO $$` block run after both tables exist.
 
@@ -134,8 +134,9 @@ Postgres credentials in `docker-compose.yml` default to `matts21st` / `devpasswo
 | GET    | `/api/users/:id`      | Get single user                                                 |
 | POST   | `/api/users`          | Create user `{ username, password, driver?, profile_pic_url? }` |
 | POST   | `/api/auth/login`     | Authenticate `{ username, password }` → user object (no password) or 401 |
-| GET    | `/api/drinks/:id`     | Fetch `{ drink_num, ex_drinks }` for a user                              |
-| PATCH  | `/api/drinks/:id`     | `{ action: 'increment' \| 'decrement' }` → updated `{ drink_num, ex_drinks }`. Decrement floors at 0. |
+| GET    | `/api/drinks/:id`     | Fetch `{ daily_drinks, total_drinks, ex_drinks }` for a user             |
+| PATCH  | `/api/drinks/:id`     | `{ action: 'increment' \| 'decrement' }` → updates `daily_drinks` only; returns `{ daily_drinks, total_drinks, ex_drinks }`. Decrement floors at 0. |
+| GET    | `/api/leaderboard`    | All users with `daily_drinks`, `total_drinks`, sorted by `daily_drinks DESC`. Frontend re-sorts for total tab. |
 | GET    | `/api/cars`           | List cars (includes driver username)                            |
 | GET    | `/api/cars/:id`       | Get single car                                                  |
 | POST   | `/api/cars`           | Create car `{ driver_id, max_num_passenger, description?, departure_time?, departure_location? }` |

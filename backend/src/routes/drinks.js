@@ -7,7 +7,7 @@ const router = Router();
 router.get('/:id', async (req, res, next) => {
   try {
     const { rows } = await pool.query(
-      'SELECT drink_num, ex_drinks FROM users WHERE user_id = $1',
+      'SELECT daily_drinks, total_drinks, ex_drinks FROM users WHERE user_id = $1',
       [req.params.id]
     );
     if (!rows.length) return res.status(404).json({ error: 'User not found' });
@@ -17,7 +17,7 @@ router.get('/:id', async (req, res, next) => {
   }
 });
 
-// PATCH /api/drinks/:id — increment or decrement drink_num
+// PATCH /api/drinks/:id — increment or decrement daily_drinks
 // Body: { action: 'increment' | 'decrement' }
 router.patch('/:id', async (req, res, next) => {
   try {
@@ -28,8 +28,14 @@ router.patch('/:id', async (req, res, next) => {
 
     const sql =
       action === 'increment'
-        ? 'UPDATE users SET drink_num = drink_num + 1 WHERE user_id = $1 RETURNING drink_num, ex_drinks'
-        : 'UPDATE users SET drink_num = GREATEST(drink_num - 1, 0) WHERE user_id = $1 RETURNING drink_num, ex_drinks';
+        ? `UPDATE users
+           SET daily_drinks = daily_drinks + 1
+           WHERE user_id = $1
+           RETURNING daily_drinks, total_drinks, ex_drinks`
+        : `UPDATE users
+           SET daily_drinks = GREATEST(daily_drinks - 1, 0)
+           WHERE user_id = $1
+           RETURNING daily_drinks, total_drinks, ex_drinks`;
 
     const { rows } = await pool.query(sql, [req.params.id]);
     if (!rows.length) return res.status(404).json({ error: 'User not found' });

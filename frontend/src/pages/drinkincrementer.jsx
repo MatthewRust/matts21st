@@ -9,8 +9,9 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 export default function DrinkIncrementer() {
   const { user } = useAuth();
 
-  const [drinkNum, setDrinkNum]   = useState(null);   // null = loading
-  const [exDrinks, setExDrinks]   = useState(null);
+  const [dailyDrinks, setDailyDrinks] = useState(null);   // null = loading
+  const [totalDrinks, setTotalDrinks] = useState(null);
+  const [exDrinks, setExDrinks]       = useState(null);
   const [pending, setPending]     = useState(false);   // PATCH in-flight
   const [error, setError]         = useState(null);
 
@@ -22,7 +23,8 @@ export default function DrinkIncrementer() {
         return r.json();
       })
       .then((data) => {
-        setDrinkNum(data.drink_num ?? 0);
+        setDailyDrinks(data.daily_drinks ?? 0);
+        setTotalDrinks(data.total_drinks ?? 0);
         setExDrinks(data.ex_drinks ?? null);
       })
       .catch((err) => setError(`Could not load your drink count — ${err.message}.`));
@@ -30,11 +32,11 @@ export default function DrinkIncrementer() {
 
   const handleAction = useCallback(async (action) => {
     if (pending) return;
-    if (action === 'decrement' && drinkNum === 0) return;
+    if (action === 'decrement' && dailyDrinks === 0) return;
 
     // Optimistic update
-    const prev = drinkNum;
-    setDrinkNum((n) => action === 'increment' ? n + 1 : Math.max(n - 1, 0));
+    const prevDaily = dailyDrinks;
+    setDailyDrinks((n) => action === 'increment' ? n + 1 : Math.max(n - 1, 0));
     setPending(true);
     setError(null);
 
@@ -46,18 +48,18 @@ export default function DrinkIncrementer() {
       });
       if (!res.ok) throw new Error('Server error');
       const data = await res.json();
-      setDrinkNum(data.drink_num);
+      setDailyDrinks(data.daily_drinks);
+      setTotalDrinks(data.total_drinks);
       setExDrinks(data.ex_drinks);
     } catch {
-      // Roll back on failure
-      setDrinkNum(prev);
+      setDailyDrinks(prevDaily);
       setError('Failed to update — please try again.');
     } finally {
       setPending(false);
     }
-  }, [pending, drinkNum, user.user_id]);
+  }, [pending, dailyDrinks, user.user_id]);
 
-  const loading = drinkNum === null && !error;
+  const loading = dailyDrinks === null && !error;
 
   return (
     <div className="min-h-screen bg-tartan flex flex-col">
@@ -86,7 +88,7 @@ export default function DrinkIncrementer() {
           <p className="font-hand text-xl text-red-800 text-center py-4">{error}</p>
         )}
 
-        {!loading && drinkNum !== null && (
+        {!loading && dailyDrinks !== null && (
           <>
             {/* Counter row */}
             <div className="flex items-center justify-center gap-6 sm:gap-10 my-4">
@@ -94,7 +96,7 @@ export default function DrinkIncrementer() {
               {/* Minus */}
               <button
                 onClick={() => handleAction('decrement')}
-                disabled={pending || drinkNum === 0}
+                disabled={pending || dailyDrinks === 0}
                 aria-label="One less drink"
                 className={`
                   w-14 h-14 rounded-full border-2 border-stone-700 bg-transparent
@@ -142,16 +144,18 @@ export default function DrinkIncrementer() {
             {/* Count display */}
             <div className="text-center mt-6">
               <span className="font-invite text-8xl text-stone-900 tabular-nums leading-none">
-                {drinkNum}
+                {dailyDrinks}
               </span>
-              {exDrinks != null && (
+              {exDrinks != null ? (
                 <p className="font-hand text-2xl text-stone-600 mt-2">
-                  {drinkNum} of {exDrinks} planned
+                  {dailyDrinks} of {exDrinks} planned today
                 </p>
+              ) : (
+                <p className="font-hand text-xl text-stone-500 mt-2">today</p>
               )}
-              {exDrinks == null && (
-                <p className="font-hand text-xl text-stone-500 mt-2">pints</p>
-              )}
+              <p className="font-invite uppercase tracking-widest text-xs text-stone-400 mt-3">
+                All time: {totalDrinks}
+              </p>
             </div>
           </>
         )}
