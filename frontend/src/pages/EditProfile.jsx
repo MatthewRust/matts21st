@@ -10,9 +10,17 @@ import InvitationCard, {
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
+// Resolve avatar paths that are relative to the API server (e.g. "/uploads/...")
+function resolveAvatar(url) {
+  if (!url) return null;
+  if (url.startsWith('/')) return `${API_URL}${url}`;
+  return url;
+}
+
 function AvatarPreview({ src, file }) {
   const [imgErr, setImgErr] = useState(false);
-  const previewSrc = file ? URL.createObjectURL(file) : src;
+  // While a new file is chosen show a local object URL; otherwise resolve the stored path
+  const previewSrc = file ? URL.createObjectURL(file) : resolveAvatar(src);
 
   return (
     <div className="w-24 h-24 rounded-full overflow-hidden ring-4 ring-stone-400/40 shadow-lg mx-auto mb-4">
@@ -159,7 +167,10 @@ export default function EditProfile() {
               <input
                 type="checkbox"
                 checked={publicTransport}
-                onChange={(e) => setPublicTransport(e.target.checked)}
+                onChange={(e) => {
+                  setPublicTransport(e.target.checked);
+                  if (e.target.checked) setDriver(false);
+                }}
                 className="h-5 w-5 accent-red-900"
               />
               Travelling by public transport
@@ -169,7 +180,10 @@ export default function EditProfile() {
               <input
                 type="checkbox"
                 checked={driver}
-                onChange={(e) => setDriver(e.target.checked)}
+                onChange={(e) => {
+                  setDriver(e.target.checked);
+                  if (e.target.checked) setPublicTransport(false);
+                }}
                 className="h-5 w-5 accent-red-900"
               />
               I am offering a lift (driver)

@@ -6,6 +6,14 @@ import Navbar from '../components/Navbar.jsx';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
+// Uploaded avatars are stored as "/uploads/filename" — a path on the API server.
+// Prepend API_URL so the browser fetches from port 3001, not the Vite dev server.
+function resolveAvatar(url) {
+  if (!url) return null;
+  if (url.startsWith('/')) return `${API_URL}${url}`;
+  return url;
+}
+
 function AvatarFallback() {
   return (
     <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
@@ -77,7 +85,7 @@ export default function Profile() {
           <div className="w-24 h-24 rounded-full overflow-hidden ring-4 ring-stone-400/40 shadow-lg">
             {!imgError ? (
               <img
-                src={user?.profile_pic_url}
+                src={resolveAvatar(user?.profile_pic_url)}
                 alt={user?.username}
                 className="w-full h-full object-cover"
                 onError={() => setImgError(true)}

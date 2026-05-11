@@ -16,7 +16,7 @@ function toDatetimeLocal(iso) {
 }
 
 export default function EditCar() {
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
   const navigate = useNavigate();
 
   const [maxPassengers,      setMaxPassengers]      = useState('');
@@ -74,6 +74,13 @@ export default function EditCar() {
       if (!res.ok) {
         const { error: msg } = await res.json().catch(() => ({}));
         throw new Error(msg || 'Could not save car details');
+      }
+
+      // If this was a new car (POST), the backend links car_id to the user in the DB
+      // but AuthContext still has car_id: null — update it so Profile can fetch the car.
+      if (method === 'POST') {
+        const newCar = await res.json();
+        updateUser({ ...user, car_id: newCar.car_id });
       }
 
       navigate('/profile');
