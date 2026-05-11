@@ -8,14 +8,9 @@ import InvitationCard, {
   inviteButtonClass,
 } from '../components/InvitationCard.jsx';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+import { resolveAvatar } from '../utils/resolveAvatar.js';
 
-// Resolve avatar paths that are relative to the API server (e.g. "/uploads/...")
-function resolveAvatar(url) {
-  if (!url) return null;
-  if (url.startsWith('/')) return `${API_URL}${url}`;
-  return url;
-}
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
 function AvatarPreview({ src, file }) {
   const [imgErr, setImgErr] = useState(false);

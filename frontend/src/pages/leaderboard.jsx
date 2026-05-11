@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo } from 'react';
 import Navbar from '../components/Navbar.jsx';
+import { resolveAvatar } from '../utils/resolveAvatar.js';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
@@ -11,7 +12,7 @@ function Avatar({ user, size = 'w-16 h-16', ring = 'ring-2 ring-stone-400/50' })
     <div className={`${size} ${ring} rounded-full overflow-hidden shrink-0 shadow-md`}>
       {!err ? (
         <img
-          src={user.profile_pic_url}
+          src={resolveAvatar(user.profile_pic_url)}
           alt={user.username}
           className="w-full h-full object-cover"
           onError={() => setErr(true)}

@@ -4,15 +4,9 @@ import { useAuth } from '../context/AuthContext.jsx';
 import InvitationCard, { inviteLabelClass, inviteButtonClass } from '../components/InvitationCard.jsx';
 import Navbar from '../components/Navbar.jsx';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+import { resolveAvatar } from '../utils/resolveAvatar.js';
 
-// Uploaded avatars are stored as "/uploads/filename" — a path on the API server.
-// Prepend API_URL so the browser fetches from port 3001, not the Vite dev server.
-function resolveAvatar(url) {
-  if (!url) return null;
-  if (url.startsWith('/')) return `${API_URL}${url}`;
-  return url;
-}
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
 function AvatarFallback() {
   return (

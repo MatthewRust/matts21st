@@ -1,5 +1,7 @@
+import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
+import { resolveAvatar } from '../utils/resolveAvatar.js';
 
 export default function Navbar() {
   const { user } = useAuth();
@@ -23,33 +25,46 @@ export default function Navbar() {
           <NavLink to="/drinks" label="The Tally" active={pathname === '/drinks'} />
           <NavLink to="/leaderboard" label="Leaderboard" active={pathname === '/leaderboard'} />
 
-          {/* Profile icon */}
+          {/* Profile avatar */}
           <Link
             to="/profile"
             title={user?.username ?? 'Profile'}
             aria-label="Go to your profile"
-            className={`p-1 rounded-full transition ${
+            className={`shrink-0 rounded-full transition ring-2 ${
               pathname === '/profile'
-                ? 'text-amber-300'
-                : 'text-stone-400 hover:text-stone-100'
+                ? 'ring-amber-300'
+                : 'ring-stone-600 hover:ring-stone-400'
             }`}
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="currentColor"
-              className="w-6 h-6"
-            >
-              <path
-                fillRule="evenodd"
-                d="M7.5 6a4.5 4.5 0 1 1 9 0 4.5 4.5 0 0 1-9 0ZM3.751 20.105a8.25 8.25 0 0 1 16.498 0 .75.75 0 0 1-.437.695A18.683 18.683 0 0 1 12 22.5c-2.786 0-5.433-.608-7.812-1.7a.75.75 0 0 1-.437-.695Z"
-                clipRule="evenodd"
-              />
-            </svg>
+            <NavAvatar user={user} />
           </Link>
         </div>
       </div>
     </nav>
+  );
+}
+
+function NavAvatar({ user }) {
+  const [imgErr, setImgErr] = useState(false);
+  const src = resolveAvatar(user?.profile_pic_url);
+
+  return (
+    <div className="w-8 h-8 rounded-full overflow-hidden">
+      {!imgErr && src ? (
+        <img
+          src={src}
+          alt={user?.username ?? 'Profile'}
+          className="w-full h-full object-cover"
+          onError={() => setImgErr(true)}
+        />
+      ) : (
+        <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+          <circle cx="40" cy="40" r="40" fill="#44403c" />
+          <circle cx="40" cy="30" r="14" fill="#78716c" />
+          <ellipse cx="40" cy="68" rx="22" ry="16" fill="#78716c" />
+        </svg>
+      )}
+    </div>
   );
 }
 
