@@ -13,6 +13,7 @@ export default function Signup() {
 
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [exDrinks, setExDrinks] = useState('');
   const [driver, setDriver] = useState(false);
   const [car, setCar] = useState({
     max_num_passenger: '',
@@ -37,6 +38,7 @@ export default function Signup() {
         password,
         driver,
         car: driver ? car : null,
+        ex_drinks: exDrinks !== '' ? Number(exDrinks) : null,
       });
       navigate('/');
     } catch (err) {
@@ -75,6 +77,18 @@ export default function Signup() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+            />
+          </div>
+
+          <div>
+            <label className={inviteLabelClass}>Drinks planned?(optional)</label>
+            <input
+              className={inviteInputClass}
+              type="number"
+              min={0}
+              value={exDrinks}
+              onChange={(e) => setExDrinks(e.target.value)}
+              placeholder="0"
             />
           </div>
 

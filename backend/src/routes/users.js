@@ -3,12 +3,12 @@ import { pool } from '../db.js';
 
 const router = Router();
 
+const PUBLIC_COLS = 'user_id, username, profile_pic_url, driver, car_id, public_transport_id, drink_num, ex_drinks';
+
 // List all users (passwords excluded)
 router.get('/', async (_req, res, next) => {
   try {
-    const { rows } = await pool.query(
-      'SELECT user_id, username, profile_pic_url, driver, car_id, public_transport_id FROM users ORDER BY user_id ASC'
-    );
+    const { rows } = await pool.query(`SELECT ${PUBLIC_COLS} FROM users ORDER BY user_id ASC`);
     res.json(rows);
   } catch (err) {
     next(err);
@@ -19,7 +19,7 @@ router.get('/', async (_req, res, next) => {
 router.get('/:id', async (req, res, next) => {
   try {
     const { rows } = await pool.query(
-      'SELECT user_id, username, profile_pic_url, driver, car_id, public_transport_id FROM users WHERE user_id = $1',
+      `SELECT ${PUBLIC_COLS} FROM users WHERE user_id = $1`,
       [req.params.id]
     );
     if (!rows.length) return res.status(404).json({ error: 'User not found' });
@@ -32,14 +32,22 @@ router.get('/:id', async (req, res, next) => {
 // Create user
 router.post('/', async (req, res, next) => {
   try {
-    const { username, password, profile_pic_url, driver = false, public_transport_id } = req.body;
+    const { username, password, profile_pic_url, driver = false, public_transport_id, ex_drinks } = req.body;
     if (!username || !password) {
       return res.status(400).json({ error: 'username and password are required' });
     }
     const { rows } = await pool.query(
-      `INSERT INTO users (username, password, profile_pic_url, driver, public_transport_id)
-       VALUES ($1, $2, $3, $4, $5) RETURNING user_id, username, profile_pic_url, driver, car_id, public_transport_id`,
-      [username, password, profile_pic_url || 'default_pic.png', driver, public_transport_id || null]
+      `INSERT INTO users (username, password, profile_pic_url, driver, public_transport_id, ex_drinks)
+       VALUES ($1, $2, $3, $4, $5, $6)
+       RETURNING ${PUBLIC_COLS}`,
+      [
+        username,
+        password,
+        profile_pic_url || 'default_pic.png',
+        driver,
+        public_transport_id || null,
+        ex_drinks != null ? Number(ex_drinks) : null,
+      ]
     );
     res.status(201).json(rows[0]);
   } catch (err) {

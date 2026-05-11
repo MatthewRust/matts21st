@@ -5,6 +5,7 @@ import Home from './pages/Home.jsx';
 import Login from './pages/Login.jsx';
 import Signup from './pages/Signup.jsx';
 import Profile from './pages/Profile.jsx';
+import DrinkIncrementer from './pages/drinkincrementer.jsx';
 
 export default function App() {
   return (
@@ -26,6 +27,14 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <Profile />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/drinks"
+            element={
+              <ProtectedRoute>
+                <DrinkIncrementer />
               </ProtectedRoute>
             }
           />

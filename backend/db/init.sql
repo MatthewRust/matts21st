@@ -15,7 +15,9 @@ CREATE TABLE IF NOT EXISTS users (
   profile_pic_url VARCHAR NOT NULL DEFAULT 'default_pic.png',
   driver BOOLEAN NOT NULL DEFAULT FALSE,
   car_id INTEGER,                -- FK to cars; added via ALTER after cars table exists
-  public_transport_id INTEGER    -- nullable, for future public transport linking
+  public_transport_id INTEGER,   -- nullable, for future public transport linking
+  ex_drinks  INTEGER,            -- optional; how many drinks they plan to have
+  drink_num  INTEGER NOT NULL DEFAULT 0  -- running tally on the night
 );
 
 -- Cars — driver_id references users
