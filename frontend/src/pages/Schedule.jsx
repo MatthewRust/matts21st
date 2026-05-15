@@ -1,7 +1,7 @@
 import Navbar from '../components/Navbar.jsx';
 import { inviteLabelClass } from '../components/InvitationCard.jsx';
 
-const DAYS = [
+export const DAYS = [
   {
     title: 'Thursday 3rd September',
     eyebrow: 'Day one',
