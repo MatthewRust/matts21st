@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
-import InvitationCard, { inviteButtonClass } from '../components/InvitationCard.jsx';
+import InvitationCard, { inviteButtonClass, inviteLabelClass, inviteInputClass } from '../components/InvitationCard.jsx';
 import Navbar from '../components/Navbar.jsx';
 import pintImg from '../assets/images/pint.jpg';
 
@@ -9,6 +9,7 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 export default function DrinkIncrementer() {
   const { user } = useAuth();
 
+  const [mode, setMode] = useState('pints'); // 'pints' | 'money'
   const [dailyDrinks, setDailyDrinks] = useState(null);   // null = loading
   const [totalDrinks, setTotalDrinks] = useState(null);
   const [exDrinks, setExDrinks]       = useState(null);
@@ -80,15 +81,25 @@ export default function DrinkIncrementer() {
           </p>
         </div>
 
-        {loading && (
+        {/* Mode tabs */}
+        <div className="flex justify-center gap-2 mb-8 border-b border-stone-200">
+          <Tab label="Pints" active={mode === 'pints'} onClick={() => setMode('pints')} />
+          <Tab label="Money" active={mode === 'money'} onClick={() => setMode('money')} />
+        </div>
+
+        {mode === 'money' && (
+          <MoneyTally userId={user.user_id} />
+        )}
+
+        {mode === 'pints' && loading && (
           <p className="font-hand text-2xl text-stone-500 text-center py-8">Loading…</p>
         )}
 
-        {error && (
+        {mode === 'pints' && error && (
           <p className="font-hand text-xl text-red-800 text-center py-4">{error}</p>
         )}
 
-        {!loading && dailyDrinks !== null && (
+        {mode === 'pints' && !loading && dailyDrinks !== null && (
           <>
             {/* Counter row */}
             <div className="flex items-center justify-center gap-6 sm:gap-10 my-4">
@@ -163,5 +174,161 @@ export default function DrinkIncrementer() {
       </InvitationCard>
       </div>
     </div>
+  );
+}
+
+function Tab({ label, active, onClick }) {
+  return (
+    <button
+      onClick={onClick}
+      className={`
+        font-invite uppercase tracking-[0.25em] text-sm px-6 py-2 transition
+        border-b-2
+        ${active
+          ? 'text-stone-900 border-stone-800'
+          : 'text-stone-400 border-transparent hover:text-stone-600 hover:border-stone-300'
+        }
+      `}
+    >
+      {label}
+    </button>
+  );
+}
+
+function MoneyTally({ userId }) {
+  const [amount, setAmount] = useState('');
+  const [category, setCategory] = useState('drink'); // 'drink' | 'food' | 'other'
+  const [otherReason, setOtherReason] = useState('');
+  const [amountSpent, setAmountSpent] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`${API_URL}/api/spending/${userId}`)
+      .then((r) => {
+        if (!r.ok) throw new Error(`Server returned ${r.status}`);
+        return r.json();
+      })
+      .then((data) => {
+        if (cancelled) return;
+        setAmountSpent(Number(data.amount_spent) || 0);
+      })
+      .catch((err) => !cancelled && setError(`Could not load your total — ${err.message}.`))
+      .finally(() => !cancelled && setLoading(false));
+    return () => { cancelled = true; };
+  }, [userId]);
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    if (submitting) return;
+    setError(null);
+
+    const parsed = Number(amount);
+    if (!Number.isFinite(parsed) || parsed <= 0) {
+      setError('Enter a positive amount.');
+      return;
+    }
+    const reason = category === 'other' ? otherReason.trim() : category;
+    if (!reason) {
+      setError('Tell us what it was for.');
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const res = await fetch(`${API_URL}/api/spending/${userId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount: parsed, reason }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error || `Server returned ${res.status}`);
+      }
+      const data = await res.json();
+      setAmountSpent(Number(data.amount_spent) || 0);
+      setAmount('');
+      setOtherReason('');
+      setCategory('drink');
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-5">
+      <div className="text-center">
+        <p className={inviteLabelClass}>All time spent</p>
+        <p className="font-invite text-5xl text-stone-900 tabular-nums">
+          {loading ? '…' : `£${(amountSpent ?? 0).toFixed(2)}`}
+        </p>
+      </div>
+
+      <div>
+        <label htmlFor="money-amount" className={inviteLabelClass}>Amount (£)</label>
+        <input
+          id="money-amount"
+          type="number"
+          step="0.01"
+          min="0"
+          inputMode="decimal"
+          value={amount}
+          onChange={(e) => setAmount(e.target.value)}
+          placeholder="0.00"
+          className={inviteInputClass}
+        />
+      </div>
+
+      <fieldset>
+        <legend className={inviteLabelClass}>What was it for?</legend>
+        <div className="flex flex-wrap gap-5 mt-1">
+          {['drink', 'food', 'other'].map((c) => (
+            <label key={c} className="flex items-center gap-2 font-hand text-2xl text-stone-800 cursor-pointer">
+              <input
+                type="radio"
+                name="category"
+                value={c}
+                checked={category === c}
+                onChange={() => setCategory(c)}
+                className="w-4 h-4 accent-red-900"
+              />
+              <span className="capitalize">{c}</span>
+            </label>
+          ))}
+        </div>
+      </fieldset>
+
+      {category === 'other' && (
+        <div>
+          <label htmlFor="other-reason" className={inviteLabelClass}>Other reason</label>
+          <input
+            id="other-reason"
+            type="text"
+            value={otherReason}
+            onChange={(e) => setOtherReason(e.target.value)}
+            placeholder="e.g. taxi, gift…"
+            className={inviteInputClass}
+          />
+        </div>
+      )}
+
+      {error && (
+        <p className="font-hand text-xl text-red-800 text-center">{error}</p>
+      )}
+
+      <div className="flex justify-center pt-2">
+        <button
+          type="submit"
+          disabled={submitting}
+          className={`${inviteButtonClass} ${submitting ? 'opacity-60 cursor-wait' : ''}`}
+        >
+          {submitting ? 'Adding…' : 'Add transaction'}
+        </button>
+      </div>
+    </form>
   );
 }

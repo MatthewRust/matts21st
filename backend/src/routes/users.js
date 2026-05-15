@@ -22,7 +22,7 @@ const uploadAvatar = multer({ storage: avatarStorage, limits: { fileSize: 5 * 10
 const PUBLIC_COLS = [
   'user_id', 'username', 'profile_pic_url', 'driver', 'car_id',
   'public_transport_id', 'public_transport', 'exp_arrival_date',
-  'ex_drinks', 'daily_drinks', 'total_drinks',
+  'ex_drinks', 'daily_drinks', 'total_drinks', 'amount_spent',
 ].join(', ');
 
 // List all users (passwords excluded)

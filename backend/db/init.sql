@@ -20,7 +20,21 @@ CREATE TABLE IF NOT EXISTS users (
   public_transport BOOLEAN NOT NULL DEFAULT FALSE, -- true if travelling by public transport
   ex_drinks     INTEGER,                      -- optional; how many drinks they plan to have
   daily_drinks  INTEGER NOT NULL DEFAULT 0,  -- resets to 0 at 23:59:59 each day
-  total_drinks  INTEGER NOT NULL DEFAULT 0   -- cumulative all-time count
+  total_drinks  INTEGER NOT NULL DEFAULT 0,  -- cumulative all-time count
+  amount_spent  DOUBLE PRECISION NOT NULL DEFAULT 0  -- running total of money spent
+);
+
+-- Backfill amount_spent for pre-existing user rows
+ALTER TABLE users
+  ADD COLUMN IF NOT EXISTS amount_spent DOUBLE PRECISION NOT NULL DEFAULT 0;
+
+-- Transactions — each entry logs an amount spent and its reason
+CREATE TABLE IF NOT EXISTS transactions (
+  transaction_id SERIAL PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+  amount DOUBLE PRECISION NOT NULL,
+  reason VARCHAR NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 -- Cars — driver_id references users
