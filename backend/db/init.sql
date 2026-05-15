@@ -71,6 +71,15 @@ CREATE TABLE IF NOT EXISTS pictures (
   upload_time TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+-- Announcements — host updates shown on the news page
+CREATE TABLE IF NOT EXISTS announcements (
+  aid SERIAL PRIMARY KEY,
+  title VARCHAR NOT NULL,
+  description TEXT NOT NULL,
+  user_id INTEGER NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 -- Seed event info rows
 INSERT INTO event_info (title, body, display_order) VALUES
   ('When', 'Date and time TBD — update this row in the event_info table.', 1),

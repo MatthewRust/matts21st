@@ -9,6 +9,7 @@ import picturesRouter from './routes/pictures.js';
 import authRouter from './routes/auth.js';
 import drinksRouter from './routes/drinks.js';
 import spendingRouter from './routes/spending.js';
+import announcementsRouter from './routes/announcements.js';
 import leaderboardRouter from './routes/leaderboard.js';
 import { startCronJobs } from './cron.js';
 
@@ -35,6 +36,7 @@ app.use('/api/pictures', picturesRouter);
 app.use('/api/auth', authRouter);
 app.use('/api/drinks', drinksRouter);
 app.use('/api/spending', spendingRouter);
+app.use('/api/announcements', announcementsRouter);
 app.use('/api/leaderboard', leaderboardRouter);
 
 // Global error handler — keeps the process alive and returns a JSON error
