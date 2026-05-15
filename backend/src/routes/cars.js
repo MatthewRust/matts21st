@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { pool } from '../db.js';
+import { createAnnouncement } from '../lib/announce.js';
 
 const router = Router();
 
@@ -211,6 +212,28 @@ router.post('/:id/join', async (req, res, next) => {
       'UPDATE users SET car_id = $1 WHERE user_id = $2',
       [newCarId, user_id]
     );
+
+    // Announce the joiner. Swallow errors so a news failure can't undo the join.
+    try {
+      const { rows: nameRows } = await client.query(
+        `SELECT j.username AS joiner_name, d.username AS driver_name
+         FROM users j, users d
+         WHERE j.user_id = $1 AND d.user_id = $2`,
+        [user_id, car.driver_id]
+      );
+      const joinerName = nameRows[0]?.joiner_name ?? 'Someone';
+      const driverName = nameRows[0]?.driver_name ?? 'a driver';
+      await createAnnouncement(
+        {
+          title: 'Another seat filled',
+          description: `${joinerName} hopped into ${driverName}'s car.`,
+          user_id: Number(user_id),
+        },
+        client
+      );
+    } catch (annErr) {
+      console.error('[announce car join]', annErr.message);
+    }
 
     await client.query('COMMIT');
 
