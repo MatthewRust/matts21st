@@ -22,6 +22,7 @@ export default function Navbar() {
         {/* Nav links */}
         <div className="flex items-center gap-5 sm:gap-8">
           <NavLink to="/" label="Home" active={pathname === '/'} />
+          <NavLink to="/announcements" label="News" active={pathname === '/announcements'} />
           <NavLink to="/drinks" label="The Tally" active={pathname === '/drinks'} />
           <NavLink to="/leaderboard" label="Leaderboard" active={pathname === '/leaderboard'} />
           <NavLink to="/cars" label="Cars" active={pathname === '/cars'} />
