@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { pool } from '../db.js';
+import { createAnnouncement } from '../lib/announce.js';
 
 const router = Router();
 
@@ -52,6 +53,26 @@ router.post('/:id', async (req, res, next) => {
     if (!userResult.rows.length) {
       await client.query('ROLLBACK');
       return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Emit announcement within the same transaction. If this fails, the spend
+    // itself is rolled back — but we don't want that, so swallow errors and log.
+    try {
+      const nameResult = await client.query(
+        'SELECT username FROM users WHERE user_id = $1',
+        [req.params.id]
+      );
+      const username = nameResult.rows[0]?.username ?? 'Someone';
+      await createAnnouncement(
+        {
+          title: 'Round on the books',
+          description: `${username} added £${amount.toFixed(2)} for ${reason}.`,
+          user_id: Number(req.params.id),
+        },
+        client
+      );
+    } catch (annErr) {
+      console.error('[announce spending]', annErr.message);
     }
 
     await client.query('COMMIT');

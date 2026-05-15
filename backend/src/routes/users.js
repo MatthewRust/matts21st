@@ -3,6 +3,7 @@ import multer from 'multer';
 import path from 'node:path';
 import fs from 'node:fs';
 import { pool } from '../db.js';
+import { createAnnouncement } from '../lib/announce.js';
 
 const router = Router();
 
@@ -76,6 +77,17 @@ router.post('/', async (req, res, next) => {
         public_transport === true || public_transport === 'true',
       ]
     );
+    // Announce the new guest. Don't let an announcement failure poison signup.
+    try {
+      await createAnnouncement({
+        title: 'A new guest arrives',
+        description: `${rows[0].username} has joined the party.`,
+        user_id: rows[0].user_id,
+      });
+    } catch (annErr) {
+      console.error('[announce signup]', annErr.message);
+    }
+
     res.status(201).json(rows[0]);
   } catch (err) {
     if (err.code === '23505') {
