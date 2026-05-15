@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
-import Navbar from '../components/Navbar.jsx';
-import { inviteLabelClass } from '../components/InvitationCard.jsx';
+import { inviteLabelClass } from './InvitationCard.jsx';
 import { resolveAvatar } from '../utils/resolveAvatar.js';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
@@ -41,6 +40,40 @@ const ROUTES = [
     ],
   },
 ];
+
+function Avatar({ user, size = 'w-12 h-12', ring = 'ring-2 ring-stone-300/60' }) {
+  const [err, setErr] = useState(false);
+  const src = resolveAvatar(user?.profile_pic_url);
+  return (
+    <div className={`${size} ${ring} rounded-full overflow-hidden shrink-0 shadow-md`}>
+      {!err && src ? (
+        <img
+          src={src}
+          alt={user?.username ?? 'Avatar'}
+          className="w-full h-full object-cover"
+          onError={() => setErr(true)}
+        />
+      ) : (
+        <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+          <circle cx="40" cy="40" r="40" fill="#e7dfd0" />
+          <circle cx="40" cy="30" r="14" fill="#a89070" />
+          <ellipse cx="40" cy="68" rx="22" ry="16" fill="#a89070" />
+        </svg>
+      )}
+    </div>
+  );
+}
+
+function formatArrival(iso) {
+  if (!iso) return 'Time TBC';
+  return new Date(iso).toLocaleString('en-GB', {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
 
 function Leg({ leg }) {
   return (
@@ -92,40 +125,6 @@ function RouteCard({ route, tilt }) {
       </div>
     </div>
   );
-}
-
-function Avatar({ user, size = 'w-12 h-12', ring = 'ring-2 ring-stone-300/60' }) {
-  const [err, setErr] = useState(false);
-  const src = resolveAvatar(user?.profile_pic_url);
-  return (
-    <div className={`${size} ${ring} rounded-full overflow-hidden shrink-0 shadow-md`}>
-      {!err && src ? (
-        <img
-          src={src}
-          alt={user?.username ?? 'Avatar'}
-          className="w-full h-full object-cover"
-          onError={() => setErr(true)}
-        />
-      ) : (
-        <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
-          <circle cx="40" cy="40" r="40" fill="#e7dfd0" />
-          <circle cx="40" cy="30" r="14" fill="#a89070" />
-          <ellipse cx="40" cy="68" rx="22" ry="16" fill="#a89070" />
-        </svg>
-      )}
-    </div>
-  );
-}
-
-function formatArrival(iso) {
-  if (!iso) return 'Time TBC';
-  return new Date(iso).toLocaleString('en-GB', {
-    weekday: 'short',
-    day: 'numeric',
-    month: 'short',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
 }
 
 function TravellerRow({ traveller }) {
@@ -198,34 +197,18 @@ function TravellersCard({ tilt }) {
   );
 }
 
-export default function PublicTransport() {
+export default function PublicTransportPanel() {
   return (
-    <div className="min-h-screen bg-tartan flex flex-col">
-      <Navbar />
+    <div className="mx-auto max-w-3xl w-full bg-parchment shadow-2xl ring-1 ring-stone-300/60 px-6 py-8 sm:px-10 sm:py-10 rotate-[-0.3deg]">
+      {ROUTES.map((route, i) => (
+        <RouteCard
+          key={route.title}
+          route={route}
+          tilt={i % 2 === 0 ? 'rotate-[0.4deg]' : 'rotate-[-0.4deg]'}
+        />
+      ))}
 
-      <div className="flex-1 flex items-start justify-center p-6 sm:p-12">
-        <div className="mx-auto max-w-3xl w-full bg-parchment shadow-2xl ring-1 ring-stone-300/60 px-6 py-10 sm:px-10 sm:py-12 rotate-[-0.3deg]">
-
-          <div className="text-center mb-8">
-            <p className="font-invite tracking-[0.4em] uppercase text-stone-500 text-xs">
-              How to arrive
-            </p>
-            <h1 className="font-invite text-5xl sm:text-6xl text-stone-900 mt-1">Public Transport</h1>
-            <p className="font-hand text-2xl text-stone-600 mt-1">— two routes to Braemar —</p>
-          </div>
-
-          {ROUTES.map((route, i) => (
-            <RouteCard
-              key={route.title}
-              route={route}
-              tilt={i % 2 === 0 ? 'rotate-[0.4deg]' : 'rotate-[-0.4deg]'}
-            />
-          ))}
-
-          <TravellersCard tilt={ROUTES.length % 2 === 0 ? 'rotate-[0.4deg]' : 'rotate-[-0.4deg]'} />
-
-        </div>
-      </div>
+      <TravellersCard tilt={ROUTES.length % 2 === 0 ? 'rotate-[0.4deg]' : 'rotate-[-0.4deg]'} />
     </div>
   );
 }

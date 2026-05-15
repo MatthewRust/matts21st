@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext.jsx';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
 import Home from './pages/Home.jsx';
@@ -9,8 +9,7 @@ import EditProfile from './pages/EditProfile.jsx';
 import EditCar from './pages/EditCar.jsx';
 import DrinkIncrementer from './pages/drinkincrementer.jsx';
 import Leaderboard from './pages/leaderboard.jsx';
-import Cars from './pages/Cars.jsx';
-import PublicTransport from './pages/PublicTransport.jsx';
+import Travel from './pages/Travel.jsx';
 import Announcements from './pages/Announcements.jsx';
 import Schedule from './pages/Schedule.jsx';
 import PackingList from './pages/PackingList.jsx';
@@ -72,21 +71,15 @@ export default function App() {
             }
           />
           <Route
-            path="/cars"
+            path="/travel"
             element={
               <ProtectedRoute>
-                <Cars />
+                <Travel />
               </ProtectedRoute>
             }
           />
-          <Route
-            path="/public-transport"
-            element={
-              <ProtectedRoute>
-                <PublicTransport />
-              </ProtectedRoute>
-            }
-          />
+          <Route path="/cars" element={<Navigate to="/travel" replace />} />
+          <Route path="/public-transport" element={<Navigate to="/travel" replace />} />
           <Route
             path="/announcements"
             element={

@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
-import Navbar from '../components/Navbar.jsx';
-import Modal from '../components/Modal.jsx';
-import { inviteLabelClass, inviteButtonClass } from '../components/InvitationCard.jsx';
+import Modal from './Modal.jsx';
+import { inviteLabelClass, inviteButtonClass } from './InvitationCard.jsx';
 import { resolveAvatar } from '../utils/resolveAvatar.js';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
@@ -48,7 +47,6 @@ function formatDeparture(iso) {
 // ─── Single car row ──────────────────────────────────────────────────────────
 
 function CarRow({ car, onOpen, tilt }) {
-  // Defensive: ensure passengers is always an array regardless of what the API returns
   const passengers = Array.isArray(car.passengers) ? car.passengers : [];
   const driverPseudoUser = {
     username: car.driver_name,
@@ -68,7 +66,6 @@ function CarRow({ car, onOpen, tilt }) {
         🚗
       </button>
 
-      {/* Driver */}
       <div className="flex items-center gap-3 shrink-0">
         <Avatar user={driverPseudoUser} size="w-12 h-12" ring="ring-4 ring-red-800" />
         <div className="leading-tight">
@@ -79,10 +76,8 @@ function CarRow({ car, onOpen, tilt }) {
         </div>
       </div>
 
-      {/* Vertical divider */}
       <div className="hidden sm:block self-stretch w-px bg-stone-300/60" />
 
-      {/* Passengers */}
       <div className="flex-1 min-w-0">
         <p className={`${inviteLabelClass} mb-1`}>
           {car.current_num_passenger} / {car.max_num_passenger} seats taken
@@ -116,7 +111,6 @@ function CarDetails({ car, user, onAction, submitting, error }) {
   };
   const formattedDeparture = formatDeparture(car.departure_time);
 
-  // Decide what action button (if any) to render
   let actionButton = null;
   if (!user?.driver) {
     if (user?.car_id === car.car_id) {
@@ -209,9 +203,9 @@ function DetailRow({ label, value }) {
   );
 }
 
-// ─── Page ────────────────────────────────────────────────────────────────────
+// ─── Panel ───────────────────────────────────────────────────────────────────
 
-export default function Cars() {
+export default function CarsPanel() {
   const { user, updateUser } = useAuth();
 
   const [cars, setCars] = useState(null);
@@ -257,7 +251,6 @@ export default function Cars() {
         throw new Error(msg || `Could not ${kind} car`);
       }
       const data = await res.json();
-      // Keep AuthContext in sync
       updateUser({ ...user, car_id: data?.user?.car_id ?? null });
       await loadCars();
       closeModal();
@@ -269,42 +262,27 @@ export default function Cars() {
   }
 
   return (
-    <div className="min-h-screen bg-tartan flex flex-col">
-      <Navbar />
-
-      <div className="flex-1 flex items-start justify-center p-6 sm:p-12">
-        <div className="mx-auto max-w-3xl w-full bg-parchment shadow-2xl ring-1 ring-stone-300/60 px-6 py-10 sm:px-10 sm:py-12 rotate-[-0.3deg]">
-
-          {/* Heading */}
-          <div className="text-center mb-8">
-            <p className="font-invite tracking-[0.4em] uppercase text-stone-500 text-xs">
-              The Carriages
-            </p>
-            <h1 className="font-invite text-5xl sm:text-6xl text-stone-900 mt-1">Cars</h1>
-            <p className="font-hand text-2xl text-stone-600 mt-1">— who's driving whom —</p>
-          </div>
-
-          {!cars && !error && (
-            <p className="font-hand text-2xl text-stone-500 text-center py-12">Loading…</p>
-          )}
-          {error && (
-            <p className="font-hand text-xl text-red-800 text-center py-8">{error}</p>
-          )}
-          {cars && cars.length === 0 && (
-            <p className="font-hand text-2xl text-stone-500 text-center py-12">
-              No carriages on offer yet.
-            </p>
-          )}
-          {cars && cars.map((car, i) => (
-            <CarRow
-              key={car.car_id}
-              car={car}
-              onOpen={(c) => { setOpenCarId(c.car_id); setModalError(null); }}
-              tilt={i % 2 === 0 ? 'rotate-[0.4deg]' : 'rotate-[-0.4deg]'}
-            />
-          ))}
-
-        </div>
+    <>
+      <div className="mx-auto max-w-3xl w-full bg-parchment shadow-2xl ring-1 ring-stone-300/60 px-6 py-8 sm:px-10 sm:py-10 rotate-[-0.3deg]">
+        {!cars && !error && (
+          <p className="font-hand text-2xl text-stone-500 text-center py-12">Loading…</p>
+        )}
+        {error && (
+          <p className="font-hand text-xl text-red-800 text-center py-8">{error}</p>
+        )}
+        {cars && cars.length === 0 && (
+          <p className="font-hand text-2xl text-stone-500 text-center py-12">
+            No carriages on offer yet.
+          </p>
+        )}
+        {cars && cars.map((car, i) => (
+          <CarRow
+            key={car.car_id}
+            car={car}
+            onOpen={(c) => { setOpenCarId(c.car_id); setModalError(null); }}
+            tilt={i % 2 === 0 ? 'rotate-[0.4deg]' : 'rotate-[-0.4deg]'}
+          />
+        ))}
       </div>
 
       <Modal open={!!openCar} onClose={closeModal} title="The Carriage">
@@ -318,6 +296,6 @@ export default function Cars() {
           />
         )}
       </Modal>
-    </div>
+    </>
   );
 }
