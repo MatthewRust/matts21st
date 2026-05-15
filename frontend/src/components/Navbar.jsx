@@ -26,7 +26,7 @@ export default function Navbar() {
           <NavLink to="/schedule" label="Schedule" active={pathname === '/schedule'} />
           <NavLink to="/packing" label="Packing" active={pathname === '/packing'} />
           <NavLink to="/rules" label="Rules" active={pathname === '/rules'} />
-          <NavLink to="/drinks" label="The Tally" active={pathname === '/drinks'} />
+          <NavLink to="/drinks" label="Tally" active={pathname === '/drinks'} />
           <NavLink to="/leaderboard" label="Leaderboard" active={pathname === '/leaderboard'} />
           <NavLink to="/cars" label="Cars" active={pathname === '/cars'} />
           <NavLink to="/public-transport" label="Transport" active={pathname === '/public-transport'} />
