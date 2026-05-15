@@ -10,6 +10,7 @@ import EditCar from './pages/EditCar.jsx';
 import DrinkIncrementer from './pages/drinkincrementer.jsx';
 import Leaderboard from './pages/leaderboard.jsx';
 import Cars from './pages/Cars.jsx';
+import PublicTransport from './pages/PublicTransport.jsx';
 
 export default function App() {
   return (
@@ -71,6 +72,14 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <Cars />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/public-transport"
+            element={
+              <ProtectedRoute>
+                <PublicTransport />
               </ProtectedRoute>
             }
           />
