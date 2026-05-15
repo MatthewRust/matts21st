@@ -6,6 +6,7 @@ const ITEMS = [
   { name: 'Pub outfit', qty: 1, note: 'Smart-casual for the local.' },
   { name: 'Black tie outfit', qty: 1, note: 'Bring out the finery.' },
   { name: 'Swimming costume', qty: 1, note: 'For the tub/Dee.' },
+  { name: 'Sports Apperal', qty:1, note: 'for general sporting activity'}
 ];
 
 function PackingRow({ item }) {

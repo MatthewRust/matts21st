@@ -3,7 +3,7 @@ import { inviteLabelClass } from '../components/InvitationCard.jsx';
 
 export const DAYS = [
   {
-    title: 'Thursday 3rd September',
+    title: 'Thursday 3rd September - Arrival',
     eyebrow: 'Day one',
     events: [
       { time: '09:00 – 16:00', text: 'Arrive at the property.' },
@@ -13,19 +13,21 @@ export const DAYS = [
     ],
   },
   {
-    title: 'Friday 4th September',
+    title: 'Friday 4th September - Olympics Day',
     eyebrow: 'Day two',
     events: [
-      { time: '08:00 – late', text: 'The Traitors game begins…' },
-      { time: '09:00 – 12:00', text: 'Breakfast / lunch + chill.' },
+      { time: '09:00 - late', text: 'Olympics Day: Can your team win gold'},
+      { time: '11:00 – 12:00', text: 'Tennis'},
+      { time: '12:00 – 13:00', text: 'Lunch' },
       { time: '12:00 – ~14:30', text: 'Scavenger hunt: who can find the most, the fastest.' },
-      { time: '14:30 – 17:00', text: 'Tub and chill.' },
+      { time: '14:30 – 16:00', text: 'Tub and chill'},
+      { time: '16:00 - 19:00', text: 'Games like croque and beer mile'},
       { time: '19:00 – 20:00', text: 'Tea time: BBQ.' },
-      { time: '20:00 – late', text: 'Traitors Round Table.' },
+      { time: '20:00 - late', text: 'Olympics winners ceromony and after party'}
     ],
   },
   {
-    title: 'Saturday 5th September',
+    title: 'Saturday 5th September - Games Day',
     eyebrow: 'Day three',
     events: [
       { time: '10:00 – 10:45', text: '"High"-K: smoke a J and run a 5K.' },
@@ -37,18 +39,19 @@ export const DAYS = [
     ],
   },
   {
-    title: 'Sunday 6th September',
+    title: 'Sunday 6th September - Traitors',
     eyebrow: 'Day four',
     events: [
+      { time: '08:00 – late', text: 'The Traitors game begins…' },
       { time: '12:00 – 13:00', text: 'Wake up.' },
       { time: '13:00 – 15:45', text: 'Refreshing hike up Morrone (mandatory for first timers).' },
-      { time: '16:00 – 19:00', text: 'Chill and recover.' },
+      { time: '16:00 – 19:00', text: 'Traitors and Games' },
       { time: '19:00 – 20:00', text: 'Tea time: venison chilli.' },
-      { time: '20:00 – late', text: 'Game night!' },
+      { time: '20:00 – late', text: 'Traitors Final Round Table' },
     ],
   },
   {
-    title: 'Monday 7th September',
+    title: 'Monday 7th September - Departure',
     eyebrow: 'Day five',
     events: [
       { time: '09:00 – 19:00', text: 'Tidy up and leave :(' },
