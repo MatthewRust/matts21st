@@ -81,28 +81,10 @@ export default function DrinkIncrementer() {
           </p>
         </div>
 
-        {/* Mode toggle */}
-        <div className="flex justify-center mb-6">
-          <div className="inline-flex border-2 border-stone-700">
-            <button
-              type="button"
-              onClick={() => setMode('pints')}
-              className={`font-invite uppercase tracking-[0.2em] text-sm px-5 py-2 transition ${
-                mode === 'pints' ? 'bg-stone-800 text-parchment text-stone-50' : 'text-stone-800 hover:bg-stone-200'
-              }`}
-            >
-              Pints
-            </button>
-            <button
-              type="button"
-              onClick={() => setMode('money')}
-              className={`font-invite uppercase tracking-[0.2em] text-sm px-5 py-2 transition border-l-2 border-stone-700 ${
-                mode === 'money' ? 'bg-stone-800 text-parchment text-stone-50' : 'text-stone-800 hover:bg-stone-200'
-              }`}
-            >
-              Money
-            </button>
-          </div>
+        {/* Mode tabs */}
+        <div className="flex justify-center gap-2 mb-8 border-b border-stone-200">
+          <Tab label="Pints" active={mode === 'pints'} onClick={() => setMode('pints')} />
+          <Tab label="Money" active={mode === 'money'} onClick={() => setMode('money')} />
         </div>
 
         {mode === 'money' && (
@@ -192,6 +174,24 @@ export default function DrinkIncrementer() {
       </InvitationCard>
       </div>
     </div>
+  );
+}
+
+function Tab({ label, active, onClick }) {
+  return (
+    <button
+      onClick={onClick}
+      className={`
+        font-invite uppercase tracking-[0.25em] text-sm px-6 py-2 transition
+        border-b-2
+        ${active
+          ? 'text-stone-900 border-stone-800'
+          : 'text-stone-400 border-transparent hover:text-stone-600 hover:border-stone-300'
+        }
+      `}
+    >
+      {label}
+    </button>
   );
 }
 
