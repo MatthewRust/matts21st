@@ -14,11 +14,10 @@ const NAV_CARDS = [
   { to: '/schedule',         icon: '', title: 'Schedule',         subtitle: 'Five days, planned to the hour.' },
   { to: '/drinks',           icon: '', title: 'The Tally',        subtitle: 'Count pints, log spend.' },
   { to: '/leaderboard',      icon: '', title: 'Leaderboard',      subtitle: 'Who leads the charge.' },
-  { to: '/cars',             icon: '', title: 'The Carriages',    subtitle: 'Lifts and shared rides.' },
-  { to: '/public-transport', icon: '', title: 'Public Transport', subtitle: 'Trains and buses to Braemar.' },
+  { to: '/travel',           icon: '', title: 'Travel',           subtitle: 'Rides and public transport.' },
   { to: '/packing',          icon: '', title: 'Packing',          subtitle: 'What to bring along.' },
   { to: '/rules',            icon: '', title: 'Rules',            subtitle: 'The lay of the land.' },
-  { to: '/profile',          icon: 'W', title: 'Profile',          subtitle: 'Your details and travel plans.' },
+  { to: '/profile',          icon: '', title: 'Profile',          subtitle: 'Your details and travel plans.' },
 ];
 
 // ─── Decorations ─────────────────────────────────────────────────────────────
@@ -291,7 +290,7 @@ export default function Home() {
             Thursday 3rd – Monday 7th September 2026
           </p>
           <p className="font-hand text-xl sm:text-2xl text-stone-600 mt-1">
-            Braemar, Scotland
+            Viewmount, Braemar, Scotland
           </p>
           {user?.username && (
             <p className="font-hand text-lg sm:text-xl text-stone-700 mt-6">
