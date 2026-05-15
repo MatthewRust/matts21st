@@ -41,6 +41,9 @@ export default function Home() {
         <RouteCard title="Leaderboard 🏆" to="/leaderboard">
           See who's leading the charge.
         </RouteCard>
+        <RouteCard title="The Carriages 🚗" to="/cars">
+          See who's driving and grab a seat.
+        </RouteCard>
 
         <section id="info" className="md:col-span-3 rounded-2xl bg-white/5 p-6 backdrop-blur">
           <h2 className="text-2xl font-semibold">Event info</h2>

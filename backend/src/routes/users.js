@@ -103,9 +103,6 @@ router.patch('/:id', uploadAvatar.single('profile_pic'), async (req, res, next) 
       }
     }
 
-    // If toggling off driver, disconnect car
-    if (updates.driver === false) updates.car_id = null;
-
     if (req.file) {
       updates.profile_pic_url = `/uploads/${req.file.filename}`;
     }
@@ -115,13 +112,40 @@ router.patch('/:id', uploadAvatar.single('profile_pic'), async (req, res, next) 
       return res.status(400).json({ error: 'No fields to update' });
     }
 
+    // If toggling driver off, we need to delete this user's car as well as
+    // update them — wrap both in a transaction. The FK ON DELETE SET NULL
+    // cascade will clear users.car_id on the driver and any passengers.
+    const shouldDeleteCar = updates.driver === false;
+
     const setClause = fields.map((f, i) => `"${f}" = $${i + 1}`).join(', ');
     const values   = [...Object.values(updates), req.params.id];
 
-    const { rows } = await pool.query(
-      `UPDATE users SET ${setClause} WHERE user_id = $${values.length} RETURNING ${PUBLIC_COLS}`,
-      values
-    );
+    let rows;
+    if (shouldDeleteCar) {
+      const client = await pool.connect();
+      try {
+        await client.query('BEGIN');
+        await client.query('DELETE FROM cars WHERE driver_id = $1', [req.params.id]);
+        const result = await client.query(
+          `UPDATE users SET ${setClause} WHERE user_id = $${values.length} RETURNING ${PUBLIC_COLS}`,
+          values
+        );
+        rows = result.rows;
+        await client.query('COMMIT');
+      } catch (txErr) {
+        await client.query('ROLLBACK');
+        throw txErr;
+      } finally {
+        client.release();
+      }
+    } else {
+      const result = await pool.query(
+        `UPDATE users SET ${setClause} WHERE user_id = $${values.length} RETURNING ${PUBLIC_COLS}`,
+        values
+      );
+      rows = result.rows;
+    }
+
     if (!rows.length) return res.status(404).json({ error: 'User not found' });
     res.json(rows[0]);
   } catch (err) {

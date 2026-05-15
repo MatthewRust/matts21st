@@ -24,6 +24,7 @@ export default function Navbar() {
           <NavLink to="/" label="Home" active={pathname === '/'} />
           <NavLink to="/drinks" label="The Tally" active={pathname === '/drinks'} />
           <NavLink to="/leaderboard" label="Leaderboard" active={pathname === '/leaderboard'} />
+          <NavLink to="/cars" label="Cars" active={pathname === '/cars'} />
 
           {/* Profile avatar */}
           <Link
