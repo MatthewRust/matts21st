@@ -1,5 +1,9 @@
+import { useEffect, useState } from 'react';
 import Navbar from '../components/Navbar.jsx';
 import { inviteLabelClass } from '../components/InvitationCard.jsx';
+import { resolveAvatar } from '../utils/resolveAvatar.js';
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
 const ROUTES = [
   {
@@ -90,6 +94,110 @@ function RouteCard({ route, tilt }) {
   );
 }
 
+function Avatar({ user, size = 'w-12 h-12', ring = 'ring-2 ring-stone-300/60' }) {
+  const [err, setErr] = useState(false);
+  const src = resolveAvatar(user?.profile_pic_url);
+  return (
+    <div className={`${size} ${ring} rounded-full overflow-hidden shrink-0 shadow-md`}>
+      {!err && src ? (
+        <img
+          src={src}
+          alt={user?.username ?? 'Avatar'}
+          className="w-full h-full object-cover"
+          onError={() => setErr(true)}
+        />
+      ) : (
+        <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+          <circle cx="40" cy="40" r="40" fill="#e7dfd0" />
+          <circle cx="40" cy="30" r="14" fill="#a89070" />
+          <ellipse cx="40" cy="68" rx="22" ry="16" fill="#a89070" />
+        </svg>
+      )}
+    </div>
+  );
+}
+
+function formatArrival(iso) {
+  if (!iso) return 'Time TBC';
+  return new Date(iso).toLocaleString('en-GB', {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
+function TravellerRow({ traveller }) {
+  return (
+    <li className="flex items-center gap-4 py-3 border-b border-stone-200 last:border-0">
+      <Avatar user={traveller} />
+      <div className="flex-1 min-w-0">
+        <p className="font-hand text-2xl text-stone-900 truncate">{traveller.username}</p>
+        <p className={inviteLabelClass}>Arrives {formatArrival(traveller.exp_arrival_date)}</p>
+      </div>
+    </li>
+  );
+}
+
+function TravellersCard({ tilt }) {
+  const [travellers, setTravellers] = useState(null);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`${API_URL}/api/users`)
+      .then((r) => {
+        if (!r.ok) throw new Error(`Server returned ${r.status}`);
+        return r.json();
+      })
+      .then((users) => {
+        if (cancelled) return;
+        const filtered = users
+          .filter((u) => u.public_transport === true)
+          .sort((a, b) => {
+            const aT = a.exp_arrival_date ? new Date(a.exp_arrival_date).getTime() : Infinity;
+            const bT = b.exp_arrival_date ? new Date(b.exp_arrival_date).getTime() : Infinity;
+            if (aT !== bT) return aT - bT;
+            return a.username.localeCompare(b.username);
+          });
+        setTravellers(filtered);
+      })
+      .catch((err) => !cancelled && setError(err.message));
+    return () => { cancelled = true; };
+  }, []);
+
+  return (
+    <div
+      className={`bg-parchment shadow-lg ring-1 ring-stone-300/60 px-5 py-5 sm:px-7 sm:py-6 ${tilt} mb-2`}
+    >
+      <div className="border-b border-stone-300 pb-3 mb-3">
+        <p className={inviteLabelClass}>Travelling together</p>
+        <h2 className="font-invite text-3xl sm:text-4xl text-stone-900">By Public Transport</h2>
+      </div>
+
+      {!travellers && !error && (
+        <p className="font-hand text-xl text-stone-500 text-center py-4">Loading…</p>
+      )}
+      {error && (
+        <p className="font-hand text-xl text-red-800 text-center py-4">{error}</p>
+      )}
+      {travellers && travellers.length === 0 && (
+        <p className="font-hand text-xl text-stone-500 text-center py-4">
+          No one's confirmed public transport yet.
+        </p>
+      )}
+      {travellers && travellers.length > 0 && (
+        <ul>
+          {travellers.map((t) => (
+            <TravellerRow key={t.user_id} traveller={t} />
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
 export default function PublicTransport() {
   return (
     <div className="min-h-screen bg-tartan flex flex-col">
@@ -113,6 +221,8 @@ export default function PublicTransport() {
               tilt={i % 2 === 0 ? 'rotate-[0.4deg]' : 'rotate-[-0.4deg]'}
             />
           ))}
+
+          <TravellersCard tilt={ROUTES.length % 2 === 0 ? 'rotate-[0.4deg]' : 'rotate-[-0.4deg]'} />
 
         </div>
       </div>
