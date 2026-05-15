@@ -13,6 +13,7 @@ import Cars from './pages/Cars.jsx';
 import PublicTransport from './pages/PublicTransport.jsx';
 import Announcements from './pages/Announcements.jsx';
 import Schedule from './pages/Schedule.jsx';
+import PackingList from './pages/PackingList.jsx';
 
 export default function App() {
   return (
@@ -98,6 +99,14 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <Schedule />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/packing"
+            element={
+              <ProtectedRoute>
+                <PackingList />
               </ProtectedRoute>
             }
           />
