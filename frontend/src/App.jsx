@@ -14,6 +14,7 @@ import PublicTransport from './pages/PublicTransport.jsx';
 import Announcements from './pages/Announcements.jsx';
 import Schedule from './pages/Schedule.jsx';
 import PackingList from './pages/PackingList.jsx';
+import Rules from './pages/Rules.jsx';
 
 export default function App() {
   return (
@@ -107,6 +108,14 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <PackingList />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/rules"
+            element={
+              <ProtectedRoute>
+                <Rules />
               </ProtectedRoute>
             }
           />
