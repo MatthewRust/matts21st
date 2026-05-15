@@ -24,7 +24,7 @@ const NAV_CARDS = [
 
 function StarDivider() {
   return (
-    <div className="font-invite tracking-[0.6em] text-stone-300 text-center my-8 select-none">
+    <div className="font-invite tracking-[0.6em] text-stone-900 text-center my-8 select-none text-xl drop-shadow-[0_1px_0_rgba(247,241,227,0.9)]">
       ★ · ★ · ★
     </div>
   );
@@ -168,7 +168,7 @@ function AnnouncementsPeek() {
 
   return (
     <section className="max-w-3xl w-full mx-auto mb-6">
-      <p className={`${inviteLabelClass} text-center mb-3 text-stone-100 drop-shadow`}>
+      <p className={`${inviteLabelClass} text-center mb-3 text-stone-900 drop-shadow-[0_1px_0_rgba(247,241,227,0.9)] font-semibold`}>
         Fresh off the press
       </p>
       {items.map((item, i) => (
@@ -312,7 +312,7 @@ export default function Home() {
         {/* Event info */}
         {info && info.length > 0 && (
           <section className="max-w-3xl w-full mx-auto mb-2">
-            <p className={`${inviteLabelClass} text-center mb-3 text-stone-100 drop-shadow`}>
+            <p className={`${inviteLabelClass} text-center mb-3 text-stone-900 drop-shadow-[0_1px_0_rgba(247,241,227,0.9)] font-semibold`}>
               The details
             </p>
             {info.map((item, i) => (
