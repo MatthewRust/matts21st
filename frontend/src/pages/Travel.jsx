@@ -1,48 +1,67 @@
 import { useState } from 'react';
 import Navbar from '../components/Navbar.jsx';
+import InvitationPanel from '../components/InvitationPanel.jsx';
 import CarsPanel from '../components/CarsPanel.jsx';
 import PublicTransportPanel from '../components/PublicTransportPanel.jsx';
-import { inviteLabelClass } from '../components/InvitationCard.jsx';
+import { PageTransition, FadeIn, motion, AnimatePresence } from '../components/MotionPrimitives.jsx';
 
 function Tab({ label, active, onClick }) {
   return (
     <button
       onClick={onClick}
-      className={`
-        font-invite uppercase tracking-[0.25em] text-sm px-6 py-2 transition
-        border-b-2
-        ${active
-          ? 'text-stone-900 border-stone-800'
-          : 'text-stone-400 border-transparent hover:text-stone-600 hover:border-stone-300'
-        }
-      `}
+      className={`relative font-invite uppercase tracking-[0.25em] text-sm px-5 sm:px-6 py-2 transition-colors ${
+        active ? 'text-ink' : 'text-ink-faint hover:text-ink-soft'
+      }`}
     >
       {label}
+      {active && (
+        <motion.span
+          layoutId="travel-tab"
+          className="absolute left-2 right-2 -bottom-0.5 h-[2px] bg-gold"
+          transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+        />
+      )}
     </button>
   );
 }
 
 export default function Travel() {
-  const [tab, setTab] = useState('cars'); // 'cars' | 'public'
+  const [tab, setTab] = useState('cars');
 
   return (
-    <div className="min-h-screen bg-tartan flex flex-col">
-      <Navbar />
+    <PageTransition>
+      <div className="min-h-screen bg-tartan">
+        <Navbar />
 
-      <div className="flex-1 flex flex-col items-center p-6 sm:p-12">
-        <div className="max-w-3xl w-full mx-auto bg-parchment shadow-2xl ring-1 ring-stone-300/60 px-6 py-8 sm:px-10 sm:py-10 rotate-[-0.3deg] text-center mb-6">
-          <p className={inviteLabelClass}>Getting to Viewmount, Braemar</p>
-          <h1 className="font-invite text-5xl sm:text-6xl text-stone-900 mt-1">Travel</h1>
-          <p className="font-hand text-2xl text-stone-600 mt-1">— ride or rail —</p>
+        <div className="flex flex-col items-center px-5 sm:px-10 pt-8 pb-16">
+          <FadeIn className="max-w-3xl w-full mx-auto mb-8">
+            <InvitationPanel variant="hero" className="text-center">
+              <p className="eyebrow">Getting to Viewmount, Braemar</p>
+              <h1 className="font-invite text-display text-ink mt-2">Travel</h1>
+              <div className="hairline-gold w-32 mx-auto my-5" />
+              <p className="font-hand text-2xl text-ink-soft">— by car or by train —</p>
 
-          <div className="flex justify-center gap-2 mt-6 border-b border-stone-200">
-            <Tab label="Cars" active={tab === 'cars'} onClick={() => setTab('cars')} />
-            <Tab label="Public Transport" active={tab === 'public'} onClick={() => setTab('public')} />
-          </div>
+              <div className="flex justify-center gap-2 mt-8 border-b border-rule/60">
+                <Tab label="Cars" active={tab === 'cars'} onClick={() => setTab('cars')} />
+                <Tab label="Public Transport" active={tab === 'public'} onClick={() => setTab('public')} />
+              </div>
+            </InvitationPanel>
+          </FadeIn>
+
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={tab}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.3 }}
+              className="w-full flex justify-center"
+            >
+              {tab === 'cars' ? <CarsPanel /> : <PublicTransportPanel />}
+            </motion.div>
+          </AnimatePresence>
         </div>
-
-        {tab === 'cars' ? <CarsPanel /> : <PublicTransportPanel />}
       </div>
-    </div>
+    </PageTransition>
   );
 }

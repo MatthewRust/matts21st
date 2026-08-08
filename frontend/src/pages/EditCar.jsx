@@ -3,10 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import Navbar from '../components/Navbar.jsx';
 import InvitationCard, {
-  inviteInputClass,
-  inviteLabelClass,
-  inviteButtonClass,
+  inviteInputClass, inviteLabelClass, inviteButtonClass, inviteGhostButtonClass,
 } from '../components/InvitationCard.jsx';
+import { PageTransition, FadeIn } from '../components/MotionPrimitives.jsx';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
@@ -19,20 +18,16 @@ export default function EditCar() {
   const { user, updateUser } = useAuth();
   const navigate = useNavigate();
 
-  const [maxPassengers,      setMaxPassengers]      = useState('');
-  const [departureTime,      setDepartureTime]      = useState('');
-  const [departureLocation,  setDepartureLocation]  = useState('');
-  const [description,        setDescription]        = useState('');
-  const [loading,            setLoading]            = useState(true);
-  const [submitting,         setSubmitting]         = useState(false);
-  const [error,              setError]              = useState(null);
+  const [maxPassengers, setMaxPassengers] = useState('');
+  const [departureTime, setDepartureTime] = useState('');
+  const [departureLocation, setDepartureLocation] = useState('');
+  const [description, setDescription] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState(null);
 
-  // Pre-fill with current car data
   useEffect(() => {
-    if (!user?.car_id) {
-      setLoading(false);
-      return;
-    }
+    if (!user?.car_id) { setLoading(false); return; }
     fetch(`${API_URL}/api/cars/${user.car_id}`)
       .then((r) => r.json())
       .then((car) => {
@@ -52,16 +47,15 @@ export default function EditCar() {
 
     try {
       const body = {
-        max_num_passenger:  Number(maxPassengers),
-        departure_time:     departureTime     || null,
+        max_num_passenger: Number(maxPassengers),
+        departure_time: departureTime || null,
         departure_location: departureLocation || null,
-        description:        description       || null,
+        description: description || null,
       };
 
-      const url  = user?.car_id
+      const url = user?.car_id
         ? `${API_URL}/api/cars/${user.car_id}`
         : `${API_URL}/api/cars`;
-
       const method = user?.car_id ? 'PATCH' : 'POST';
       const bodyWithDriver = user?.car_id ? body : { ...body, driver_id: user.user_id };
 
@@ -76,8 +70,6 @@ export default function EditCar() {
         throw new Error(msg || 'Could not save car details');
       }
 
-      // If this was a new car (POST), the backend links car_id to the user in the DB
-      // but AuthContext still has car_id: null — update it so Profile can fetch the car.
       if (method === 'POST') {
         const newCar = await res.json();
         updateUser({ ...user, car_id: newCar.car_id });
@@ -92,86 +84,88 @@ export default function EditCar() {
   }
 
   return (
-    <div className="min-h-screen bg-tartan flex flex-col">
-      <Navbar />
-      <div className="flex-1 flex items-center justify-center p-6 sm:p-12">
-        <InvitationCard tilt="rotate-[-1deg]" maxWidth="max-w-xl">
-
-          <div className="text-center mb-8">
-            <p className="font-invite tracking-[0.4em] uppercase text-stone-500 text-xs">
-              Your carriage awaits
-            </p>
-            <h1 className="font-invite text-5xl sm:text-6xl text-stone-900 mt-1">Edit Car</h1>
-            <p className="font-hand text-2xl text-stone-600 mt-1">— detail your conveyance —</p>
-          </div>
-
-          {loading && (
-            <p className="font-hand text-2xl text-stone-500 text-center py-8">Loading…</p>
-          )}
-
-          {!loading && (
-            <form onSubmit={onSubmit} className="space-y-7">
-              <div>
-                <label className={inviteLabelClass}>Seats available for passengers</label>
-                <input
-                  className={inviteInputClass}
-                  type="number"
-                  min={1}
-                  value={maxPassengers}
-                  onChange={(e) => setMaxPassengers(e.target.value)}
-                  required
-                />
+    <PageTransition>
+      <div className="min-h-screen bg-tartan">
+        <Navbar />
+        <div className="flex items-center justify-center px-5 sm:px-10 pt-8 pb-16">
+          <FadeIn>
+            <InvitationCard tilt="rotate-[-0.8deg]" maxWidth="max-w-xl">
+              <div className="text-center mb-8">
+                <p className="eyebrow">Your car</p>
+                <h1 className="font-invite text-display text-ink mt-2">Edit Car</h1>
+                <div className="hairline-gold w-24 mx-auto my-4" />
+                <p className="font-hand text-2xl text-ink-soft">— seats, timings and pickup —</p>
               </div>
 
-              <div>
-                <label className={inviteLabelClass}>Departure time (optional)</label>
-                <input
-                  className={inviteInputClass}
-                  type="datetime-local"
-                  value={departureTime}
-                  onChange={(e) => setDepartureTime(e.target.value)}
-                />
-              </div>
+              {loading && (
+                <p className="font-hand text-2xl text-ink-faint text-center py-8">Loading…</p>
+              )}
 
-              <div>
-                <label className={inviteLabelClass}>Departure location (optional)</label>
-                <input
-                  className={inviteInputClass}
-                  type="text"
-                  value={departureLocation}
-                  onChange={(e) => setDepartureLocation(e.target.value)}
-                />
-              </div>
+              {!loading && (
+                <form onSubmit={onSubmit} className="space-y-7">
+                  <div>
+                    <label className={inviteLabelClass}>Seats available for passengers</label>
+                    <input
+                      className={inviteInputClass}
+                      type="number"
+                      min={1}
+                      value={maxPassengers}
+                      onChange={(e) => setMaxPassengers(e.target.value)}
+                      required
+                    />
+                  </div>
 
-              <div>
-                <label className={inviteLabelClass}>Notes on your motor</label>
-                <input
-                  className={inviteInputClass}
-                  type="text"
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Red Mini, dog-friendly…"
-                />
-              </div>
+                  <div>
+                    <label className={inviteLabelClass}>Departure time (optional)</label>
+                    <input
+                      className={inviteInputClass}
+                      type="datetime-local"
+                      value={departureTime}
+                      onChange={(e) => setDepartureTime(e.target.value)}
+                    />
+                  </div>
 
-              {error && <p className="font-hand text-xl text-red-800">{error}</p>}
+                  <div>
+                    <label className={inviteLabelClass}>Departure location (optional)</label>
+                    <input
+                      className={inviteInputClass}
+                      type="text"
+                      value={departureLocation}
+                      onChange={(e) => setDepartureLocation(e.target.value)}
+                    />
+                  </div>
 
-              <div className="flex flex-col items-center gap-4 pt-2">
-                <button type="submit" disabled={submitting} className={inviteButtonClass}>
-                  {submitting ? 'Saving…' : 'Save car details'}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => navigate('/profile')}
-                  className="font-hand text-xl text-stone-700 underline decoration-dotted underline-offset-4"
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
-          )}
-        </InvitationCard>
+                  <div>
+                    <label className={inviteLabelClass}>Notes on your car</label>
+                    <input
+                      className={inviteInputClass}
+                      type="text"
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
+                      placeholder="Red Mini, dog-friendly…"
+                    />
+                  </div>
+
+                  {error && <p className="font-hand text-xl text-seal">{error}</p>}
+
+                  <div className="flex flex-col items-center gap-4 pt-2">
+                    <button type="submit" disabled={submitting} className={inviteButtonClass}>
+                      {submitting ? 'Saving…' : 'Save car details'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => navigate('/profile')}
+                      className={`${inviteGhostButtonClass} text-xs px-5 py-2`}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </form>
+              )}
+            </InvitationCard>
+          </FadeIn>
+        </div>
       </div>
-    </div>
+    </PageTransition>
   );
 }

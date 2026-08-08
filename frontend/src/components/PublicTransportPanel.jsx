@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
-import { inviteLabelClass } from './InvitationCard.jsx';
+import InvitationPanel from './InvitationPanel.jsx';
+import { FadeIn, StaggerGroup, StaggerItem } from './MotionPrimitives.jsx';
+import { inviteLabelClass, inviteButtonClass } from './InvitationCard.jsx';
 import { resolveAvatar } from '../utils/resolveAvatar.js';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
@@ -7,11 +9,11 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 const ROUTES = [
   {
     title: 'Via Dundee',
-    subtitle: 'The swift way',
+    subtitle: 'The quickest',
     totalTime: '~ 3.5 hours',
     legs: [
-      { icon: '', provider: 'ScotRail', from: 'Edinburgh', to: 'Dundee', mode: 'Train' },
-      { icon: '', provider: 'Ember',    from: 'Dundee',    to: 'Braemar', mode: 'Bus' },
+      { provider: 'ScotRail', from: 'Edinburgh', to: 'Dundee',  mode: 'Train' },
+      { provider: 'Ember',    from: 'Dundee',    to: 'Braemar', mode: 'Bus' },
     ],
     links: [
       {
@@ -22,16 +24,16 @@ const ROUTES = [
   },
   {
     title: 'Via Aberdeen',
-    subtitle: 'The scenic way',
+    subtitle: 'The scenic route',
     totalTime: '~ 5–7 hours',
     legs: [
-      { icon: '', provider: 'ScotRail', from: 'Edinburgh', to: 'Aberdeen', mode: 'Train' },
-      { icon: '', provider: 'Ember',    from: 'Aberdeen',  to: 'Braemar',  mode: 'Bus' },
+      { provider: 'ScotRail', from: 'Edinburgh', to: 'Aberdeen', mode: 'Train' },
+      { provider: 'Ember',    from: 'Aberdeen',  to: 'Braemar',  mode: 'Bus' },
     ],
     links: [
       {
         label: 'Edi to Aber',
-        href: 'https://www.scotrail.co.uk/train-times/edinburgh-waverley-to-aberdeen?gad_source=1&gad_campaignid=13139459975&gbraid=0AAAAAD3h74veKZbRydAe3agvvfJM4QS2e&gclid=Cj0KCQjwiJvQBhCYARIsAMjts3JaRAtTBH_2YxWelmjUJMrOe6yPXtoEbtYreOemmmh8XYLYzwVHg9UaAssNEALw_wcB',
+        href: 'https://www.scotrail.co.uk/train-times/edinburgh-waverley-to-aberdeen',
       },
       {
         label: 'Aber to Braemar',
@@ -41,11 +43,11 @@ const ROUTES = [
   },
 ];
 
-function Avatar({ user, size = 'w-12 h-12', ring = 'ring-2 ring-stone-300/60' }) {
+function Avatar({ user, size = 'w-12 h-12', ring = 'ring-2 ring-rule/60' }) {
   const [err, setErr] = useState(false);
   const src = resolveAvatar(user?.profile_pic_url);
   return (
-    <div className={`${size} ${ring} rounded-full overflow-hidden shrink-0 shadow-md`}>
+    <div className={`${size} ${ring} rounded-full overflow-hidden shrink-0 shadow-paper`}>
       {!err && src ? (
         <img
           src={src}
@@ -64,6 +66,16 @@ function Avatar({ user, size = 'w-12 h-12', ring = 'ring-2 ring-stone-300/60' })
   );
 }
 
+function ModeBadge({ mode }) {
+  const icon = mode === 'Train' ? '🚆' : mode === 'Bus' ? '🚌' : '·';
+  return (
+    <span className="inline-flex items-center gap-1.5 font-invite uppercase tracking-[0.18em] text-[0.7rem] text-ink-faint">
+      <span aria-hidden="true">{icon}</span>
+      {mode}
+    </span>
+  );
+}
+
 function formatArrival(iso) {
   if (!iso) return 'Time TBC';
   return new Date(iso).toLocaleString('en-GB', {
@@ -75,65 +87,70 @@ function formatArrival(iso) {
   });
 }
 
-function Leg({ leg }) {
+function Leg({ leg, last }) {
   return (
-    <div className="flex items-center gap-4 py-2">
-      <span className="text-3xl sm:text-4xl leading-none shrink-0">{leg.icon}</span>
-      <div className="flex-1 min-w-0">
-        <p className={inviteLabelClass}>{leg.mode} · {leg.provider}</p>
-        <p className="font-hand text-2xl text-stone-900 truncate">
-          {leg.from} <span className="text-stone-500">→</span> {leg.to}
-        </p>
-      </div>
-    </div>
+    <li className="relative pl-7 py-3">
+      <span
+        aria-hidden="true"
+        className="absolute left-0 top-5 w-3 h-3 rounded-full bg-gold ring-4 ring-parchment"
+      />
+      {!last && (
+        <span aria-hidden="true" className="absolute left-[5.5px] top-7 bottom-0 w-px bg-rule/60" />
+      )}
+      <ModeBadge mode={leg.mode} />
+      <p className="font-hand text-2xl text-ink mt-0.5">
+        {leg.from} <span className="text-ink-faint">→</span> {leg.to}
+      </p>
+      <p className="font-hand text-base text-ink-faint">{leg.provider}</p>
+    </li>
   );
 }
 
 function RouteCard({ route, tilt }) {
   return (
-    <div
-      className={`bg-parchment shadow-lg ring-1 ring-stone-300/60 px-5 py-5 sm:px-7 sm:py-6 ${tilt} mb-8`}
-    >
-      <div className="flex items-end justify-between gap-3 mb-3 border-b border-stone-300 pb-3">
-        <div>
-          <p className={inviteLabelClass}>{route.subtitle}</p>
-          <h2 className="font-invite text-3xl sm:text-4xl text-stone-900">{route.title}</h2>
+    <StaggerItem>
+      <InvitationPanel variant="card" tilt={tilt} className="mb-7">
+        <header className="flex items-end justify-between gap-3 mb-4 border-b border-rule/60 pb-4">
+          <div>
+            <p className="eyebrow text-gold">{route.subtitle}</p>
+            <h2 className="font-invite text-3xl sm:text-4xl text-ink mt-1">{route.title}</h2>
+          </div>
+          <p className="font-hand text-xl sm:text-2xl text-ink-soft whitespace-nowrap num">
+            {route.totalTime}
+          </p>
+        </header>
+
+        <ol>
+          {route.legs.map((leg, i) => (
+            <Leg key={i} leg={leg} last={i === route.legs.length - 1} />
+          ))}
+        </ol>
+
+        <div className="flex flex-wrap gap-3 justify-center pt-5 mt-4 border-t border-rule/60">
+          {route.links.map((link) => (
+            <a
+              key={link.href}
+              href={link.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={`${inviteButtonClass} text-xs px-5 py-2`}
+            >
+              {link.label}
+            </a>
+          ))}
         </div>
-        <p className="font-hand text-xl sm:text-2xl text-stone-700 whitespace-nowrap">
-          {route.totalTime}
-        </p>
-      </div>
-
-      <div className="divide-y divide-stone-200">
-        {route.legs.map((leg, i) => (
-          <Leg key={i} leg={leg} />
-        ))}
-      </div>
-
-      <div className="flex flex-wrap gap-3 justify-center pt-5 mt-3 border-t border-stone-300">
-        {route.links.map((link) => (
-          <a
-            key={link.href}
-            href={link.href}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="font-invite uppercase tracking-[0.2em] text-sm bg-red-900 text-parchment text-stone-50 px-5 py-2 shadow-md hover:bg-red-800 transition rotate-[-1deg]"
-          >
-            {link.label}
-          </a>
-        ))}
-      </div>
-    </div>
+      </InvitationPanel>
+    </StaggerItem>
   );
 }
 
 function TravellerRow({ traveller }) {
   return (
-    <li className="flex items-center gap-4 py-3 border-b border-stone-200 last:border-0">
+    <li className="flex items-center gap-4 py-3 border-b border-rule/40 last:border-0">
       <Avatar user={traveller} />
       <div className="flex-1 min-w-0">
-        <p className="font-hand text-2xl text-stone-900 truncate">{traveller.username}</p>
-        <p className={inviteLabelClass}>Arrives {formatArrival(traveller.exp_arrival_date)}</p>
+        <p className="font-hand text-2xl text-ink truncate">{traveller.username}</p>
+        <p className="eyebrow">Arrives {formatArrival(traveller.exp_arrival_date)}</p>
       </div>
     </li>
   );
@@ -167,48 +184,50 @@ function TravellersCard({ tilt }) {
   }, []);
 
   return (
-    <div
-      className={`bg-parchment shadow-lg ring-1 ring-stone-300/60 px-5 py-5 sm:px-7 sm:py-6 ${tilt} mb-2`}
-    >
-      <div className="border-b border-stone-300 pb-3 mb-3">
-        <p className={inviteLabelClass}>Travelling together</p>
-        <h2 className="font-invite text-3xl sm:text-4xl text-stone-900">By Public Transport</h2>
-      </div>
+    <StaggerItem>
+      <InvitationPanel variant="card" tilt={tilt}>
+        <div className="border-b border-rule/60 pb-4 mb-4">
+          <p className="eyebrow text-gold">Travelling together</p>
+          <h2 className="font-invite text-3xl sm:text-4xl text-ink mt-1">By public transport</h2>
+        </div>
 
-      {!travellers && !error && (
-        <p className="font-hand text-xl text-stone-500 text-center py-4">Loading…</p>
-      )}
-      {error && (
-        <p className="font-hand text-xl text-red-800 text-center py-4">{error}</p>
-      )}
-      {travellers && travellers.length === 0 && (
-        <p className="font-hand text-xl text-stone-500 text-center py-4">
-          No one's confirmed public transport yet.
-        </p>
-      )}
-      {travellers && travellers.length > 0 && (
-        <ul>
-          {travellers.map((t) => (
-            <TravellerRow key={t.user_id} traveller={t} />
-          ))}
-        </ul>
-      )}
-    </div>
+        {!travellers && !error && (
+          <p className="font-hand text-xl text-ink-faint text-center py-4">Loading…</p>
+        )}
+        {error && (
+          <p className="font-hand text-xl text-seal text-center py-4">{error}</p>
+        )}
+        {travellers && travellers.length === 0 && (
+          <p className="font-hand text-xl text-ink-faint text-center py-4">
+            No one's confirmed public transport yet.
+          </p>
+        )}
+        {travellers && travellers.length > 0 && (
+          <ul>
+            {travellers.map((t) => (
+              <TravellerRow key={t.user_id} traveller={t} />
+            ))}
+          </ul>
+        )}
+      </InvitationPanel>
+    </StaggerItem>
   );
 }
 
 export default function PublicTransportPanel() {
   return (
-    <div className="mx-auto max-w-3xl w-full bg-parchment shadow-2xl ring-1 ring-stone-300/60 px-6 py-8 sm:px-10 sm:py-10 rotate-[-0.3deg]">
-      {ROUTES.map((route, i) => (
-        <RouteCard
-          key={route.title}
-          route={route}
-          tilt={i % 2 === 0 ? 'rotate-[0.4deg]' : 'rotate-[-0.4deg]'}
-        />
-      ))}
+    <FadeIn className="mx-auto max-w-3xl w-full">
+      <StaggerGroup>
+        {ROUTES.map((route, i) => (
+          <RouteCard
+            key={route.title}
+            route={route}
+            tilt={i % 2 === 0 ? 0.3 : -0.3}
+          />
+        ))}
 
-      <TravellersCard tilt={ROUTES.length % 2 === 0 ? 'rotate-[0.4deg]' : 'rotate-[-0.4deg]'} />
-    </div>
+        <TravellersCard tilt={ROUTES.length % 2 === 0 ? 0.3 : -0.3} />
+      </StaggerGroup>
+    </FadeIn>
   );
 }

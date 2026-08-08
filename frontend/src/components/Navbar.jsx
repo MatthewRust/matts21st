@@ -1,51 +1,85 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext.jsx';
 import { resolveAvatar } from '../utils/resolveAvatar.js';
+import MobileNavDrawer from './MobileNavDrawer.jsx';
+
+const NAV = [
+  { to: '/',              label: 'Home' },
+  { to: '/announcements', label: 'News' },
+  { to: '/schedule',      label: 'Schedule' },
+  { to: '/packing',       label: 'Packing' },
+  { to: '/rules',         label: 'Rules' },
+  { to: '/drinks',        label: 'Tally' },
+  { to: '/leaderboard',   label: 'Leaderboard' },
+  { to: '/travel',        label: 'Travel' },
+];
 
 export default function Navbar() {
   const { user } = useAuth();
   const { pathname } = useLocation();
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   return (
-    <nav className="bg-stone-950 border-b border-stone-700/60">
-      <div className="max-w-5xl mx-auto px-6 py-3 flex items-center justify-between gap-6">
+    <>
+      <nav className="sticky top-0 z-30 bg-stone-950/95 backdrop-blur supports-[backdrop-filter]:bg-stone-950/80 border-b border-stone-800/70">
+        <div className="max-w-6xl mx-auto px-5 sm:px-8 py-3 flex items-center justify-between gap-4">
 
-        {/* Site title */}
-        <Link
-          to="/"
-          className="font-invite tracking-[0.25em] uppercase text-stone-100 text-xl sm:text-2xl shrink-0 hover:text-amber-200 transition"
-        >
-          Matt's 21st
-        </Link>
-
-        {/* Nav links */}
-        <div className="flex items-center gap-5 sm:gap-8">
-          <NavLink to="/" label="Home" active={pathname === '/'} />
-          <NavLink to="/announcements" label="News" active={pathname === '/announcements'} />
-          <NavLink to="/schedule" label="Schedule" active={pathname === '/schedule'} />
-          <NavLink to="/packing" label="Packing" active={pathname === '/packing'} />
-          <NavLink to="/rules" label="Rules" active={pathname === '/rules'} />
-          <NavLink to="/drinks" label="Tally" active={pathname === '/drinks'} />
-          <NavLink to="/leaderboard" label="Leaderboard" active={pathname === '/leaderboard'} />
-          <NavLink to="/travel" label="Travel" active={pathname === '/travel'} />
-
-          {/* Profile avatar */}
           <Link
-            to="/profile"
-            title={user?.username ?? 'Profile'}
-            aria-label="Go to your profile"
-            className={`shrink-0 rounded-full transition ring-2 ${
-              pathname === '/profile'
-                ? 'ring-amber-300'
-                : 'ring-stone-600 hover:ring-stone-400'
-            }`}
+            to="/"
+            className="font-invite tracking-[0.3em] uppercase text-parchment text-lg sm:text-xl shrink-0 hover:text-gold-soft transition-colors"
           >
-            <NavAvatar user={user} />
+            <span className="inline-flex items-center gap-2">
+              <span className="block w-2 h-2 rounded-full bg-seal shadow-[0_0_0_2px_rgba(169,131,66,0.4)]" />
+              Matt's 21st
+            </span>
           </Link>
+
+          {/* Desktop links */}
+          <div className="hidden lg:flex items-center gap-6 xl:gap-8">
+            {NAV.map((link) => (
+              <NavLink
+                key={link.to}
+                to={link.to}
+                label={link.label}
+                active={pathname === link.to}
+              />
+            ))}
+          </div>
+
+          <div className="flex items-center gap-3 sm:gap-4">
+            {/* Profile avatar (desktop) */}
+            <Link
+              to="/profile"
+              title={user?.username ?? 'Profile'}
+              aria-label="Go to your profile"
+              className={`hidden sm:block shrink-0 rounded-full transition ring-2 ${
+                pathname === '/profile'
+                  ? 'ring-gold'
+                  : 'ring-stone-600 hover:ring-gold-soft'
+              }`}
+            >
+              <NavAvatar user={user} />
+            </Link>
+
+            {/* Hamburger (mobile/tablet) */}
+            <button
+              type="button"
+              onClick={() => setDrawerOpen(true)}
+              aria-label="Open menu"
+              className="lg:hidden inline-flex flex-col gap-[5px] p-2 -mr-2 text-parchment hover:text-gold-soft transition-colors"
+            >
+              <span className="block w-6 h-px bg-current" />
+              <span className="block w-6 h-px bg-current" />
+              <span className="block w-6 h-px bg-current" />
+            </button>
+          </div>
         </div>
-      </div>
-    </nav>
+      </nav>
+
+      <MobileNavDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />
+    </>
   );
 }
 
@@ -77,13 +111,20 @@ function NavLink({ to, label, active }) {
   return (
     <Link
       to={to}
-      className={`font-invite uppercase tracking-[0.2em] text-sm transition pb-0.5 ${
+      className={`relative font-invite uppercase tracking-[0.22em] text-xs xl:text-sm pb-1 transition-colors ${
         active
-          ? 'text-amber-300 border-b border-amber-300'
-          : 'text-stone-400 hover:text-stone-100 border-b border-transparent hover:border-stone-500'
+          ? 'text-gold-soft'
+          : 'text-stone-400 hover:text-parchment'
       }`}
     >
       {label}
+      {active && (
+        <motion.span
+          layoutId="nav-underline"
+          className="absolute left-0 right-0 -bottom-0.5 h-[1.5px] bg-gold"
+          transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+        />
+      )}
     </Link>
   );
 }

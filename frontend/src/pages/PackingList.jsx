@@ -1,58 +1,70 @@
 import Navbar from '../components/Navbar.jsx';
-import { inviteLabelClass } from '../components/InvitationCard.jsx';
+import InvitationPanel from '../components/InvitationPanel.jsx';
+import { Flourish } from '../components/Flourish.jsx';
+import { PageTransition, FadeIn, StaggerGroup, StaggerItem } from '../components/MotionPrimitives.jsx';
 
 const ITEMS = [
-  { name: 'Outdoorsy outfit', qty: 1, note: 'For hikes and general adventure.' },
-  { name: 'Pub outfit', qty: 1, note: 'Smart-casual for the local.' },
-  { name: 'Black tie outfit', qty: 1, note: 'Bring out the finery.' },
-  { name: 'Swimming costume', qty: 1, note: 'For the tub/Dee.' },
-  { name: 'Sports Apperal', qty:1, note: 'for general sporting activity'}
+  { name: 'Outdoorsy outfit',  qty: 1, note: 'For hikes and the outdoors.' },
+  { name: 'Pub outfit',        qty: 1, note: 'Smart-casual for the local.' },
+  { name: 'Black tie outfit',  qty: 1, note: 'For the formal dinner.' },
+  { name: 'Swimming costume',  qty: 1, note: 'For the tub or the Dee.' },
+  { name: 'Sports apparel',    qty: 1, note: 'For general sporting activity.' },
 ];
 
 function PackingRow({ item }) {
   return (
-    <li className="flex items-center gap-4 py-3 border-b border-stone-200 last:border-0">
-      <span className="font-invite text-2xl text-stone-900 w-12 shrink-0 text-center tabular-nums">
-        ×{item.qty}
-      </span>
-      <div className="flex-1 min-w-0">
-        <p className="font-hand text-2xl text-stone-900 leading-tight">{item.name}</p>
-        {item.note && (
-          <p className={inviteLabelClass}>{item.note}</p>
-        )}
-      </div>
-    </li>
+    <StaggerItem>
+      <li className="flex items-center gap-5 py-4 border-b border-rule/40 last:border-0">
+        <span className="font-invite text-3xl text-ink w-12 shrink-0 text-center num">
+          ×{item.qty}
+        </span>
+        <div className="flex-1 min-w-0">
+          <p className="font-hand text-2xl text-ink leading-tight">{item.name}</p>
+          {item.note && (
+            <p className="eyebrow mt-1 text-ink-faint">{item.note}</p>
+          )}
+        </div>
+        <span className="font-invite text-gold text-2xl select-none">✓</span>
+      </li>
+    </StaggerItem>
   );
 }
 
 export default function PackingList() {
   return (
-    <div className="min-h-screen bg-tartan flex flex-col">
-      <Navbar />
+    <PageTransition>
+      <div className="min-h-screen bg-tartan">
+        <Navbar />
 
-      <div className="flex-1 flex flex-col items-center p-6 sm:p-12">
-        <div className="max-w-2xl w-full mx-auto bg-parchment shadow-2xl ring-1 ring-stone-300/60 px-6 py-8 sm:px-10 sm:py-10 rotate-[-0.3deg] text-center mb-8">
-          <p className="font-invite tracking-[0.4em] uppercase text-stone-500 text-xs">
-            Don't forget
-          </p>
-          <h1 className="font-invite text-5xl sm:text-6xl text-stone-900 mt-1">Packing List</h1>
-          <p className="font-hand text-2xl text-stone-600 mt-1">— what to bring along —</p>
-        </div>
+        <div className="flex flex-col items-center px-5 sm:px-10 pt-8 pb-16">
+          <FadeIn className="max-w-2xl w-full mx-auto mb-2">
+            <InvitationPanel variant="hero" className="text-center">
+              <p className="eyebrow">Don't forget</p>
+              <h1 className="font-invite text-display text-ink mt-2">Packing List</h1>
+              <div className="hairline-gold w-32 mx-auto my-4" />
+              <p className="font-hand text-2xl text-ink-soft">— what to bring —</p>
+            </InvitationPanel>
+          </FadeIn>
 
-        <div className="max-w-2xl w-full mx-auto">
-          <article className="bg-parchment shadow-lg ring-1 ring-stone-300/60 px-6 py-6 sm:px-8 sm:py-7 rotate-[0.4deg]">
-            <header className="border-b border-stone-300 pb-3 mb-3">
-              <p className={inviteLabelClass}>Recommended</p>
-              <h2 className="font-invite text-3xl sm:text-4xl text-stone-900">The essentials</h2>
-            </header>
-            <ul>
-              {ITEMS.map((item) => (
-                <PackingRow key={item.name} item={item} />
-              ))}
-            </ul>
-          </article>
+          <Flourish />
+
+          <FadeIn className="max-w-2xl w-full mx-auto">
+            <InvitationPanel variant="card" tilt={0.3}>
+              <header className="border-b border-rule/60 pb-4 mb-4">
+                <p className="eyebrow text-gold">Recommended</p>
+                <h2 className="font-invite text-3xl sm:text-4xl text-ink mt-1">The essentials</h2>
+              </header>
+              <ol>
+                <StaggerGroup stagger={0.05}>
+                  {ITEMS.map((item) => (
+                    <PackingRow key={item.name} item={item} />
+                  ))}
+                </StaggerGroup>
+              </ol>
+            </InvitationPanel>
+          </FadeIn>
         </div>
       </div>
-    </div>
+    </PageTransition>
   );
 }

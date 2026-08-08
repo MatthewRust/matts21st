@@ -1,8 +1,31 @@
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Caveat:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,500&family=Caveat:wght@400;500;600;700&display=swap');
+
+@import './styles/tokens.css';
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  html, body {
+    color: var(--ink);
+    font-feature-settings: 'liga', 'kern';
+  }
+  body {
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  /* Old-style numerals on the serif (when supported by the font file) */
+  .font-invite {
+    font-feature-settings: 'liga', 'kern', 'onum';
+  }
+  /* Focus ring shared across interactive elements */
+  :where(button, a, input, textarea, select):focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
+    border-radius: 2px;
+  }
+}
 
 @layer utilities {
   .bg-tartan {
@@ -15,11 +38,78 @@
     background-size: 100% 100%;
     background-repeat: no-repeat;
   }
+  /* Subtle parchment vignette over the tartan, used at page level so the cards
+     feel like they're resting on a paper table runner rather than the tartan. */
+  .bg-tartan::after {
+    content: '';
+  }
+
   /* Parchment / cream paper for invitation cards */
   .bg-parchment {
-    background-color: #f7f1e3;
-    background-image:
-      radial-gradient(at 20% 30%, rgba(120, 90, 40, 0.06) 0, transparent 50%),
-      radial-gradient(at 80% 70%, rgba(120, 90, 40, 0.05) 0, transparent 50%);
+    background-color: var(--parchment);
+    background-image: var(--grain);
   }
+  .bg-parchment-deep {
+    background-color: var(--parchment-deep);
+    background-image: var(--grain);
+  }
+
+  /* Ink text colours via tokens */
+  .text-ink       { color: var(--ink); }
+  .text-ink-soft  { color: var(--ink-soft); }
+  .text-ink-faint { color: var(--ink-faint); }
+  .text-gold      { color: var(--gold); }
+  .text-gold-soft { color: var(--gold-soft); }
+  .text-seal      { color: var(--seal); }
+  .bg-seal        { background-color: var(--seal); }
+  .bg-gold        { background-color: var(--gold); }
+  .ring-gold      { --tw-ring-color: var(--gold); }
+  .border-rule    { border-color: var(--rule); }
+
+  /* Shadows */
+  .shadow-paper   { box-shadow: var(--shadow-paper); }
+  .shadow-lift    { box-shadow: var(--shadow-lift); }
+  .shadow-seal    { box-shadow: var(--shadow-seal); }
+
+  /* A torn / deckled edge mask for high-end cards (used sparingly) */
+  .deckle-edge {
+    -webkit-mask-image:
+      radial-gradient(2.5px 2.5px at 50% 0%, black 99%, transparent 100%) repeat-x top/8px 6px,
+      radial-gradient(2.5px 2.5px at 50% 100%, black 99%, transparent 100%) repeat-x bottom/8px 6px,
+      linear-gradient(black, black);
+    -webkit-mask-composite: source-over;
+            mask-composite: add;
+  }
+
+  /* Eyebrow micro-label */
+  .eyebrow {
+    font-family: 'Cormorant Garamond', serif;
+    text-transform: uppercase;
+    letter-spacing: 0.42em;
+    font-size: var(--fs-eyebrow);
+    color: var(--ink-faint);
+    font-weight: 500;
+  }
+
+  /* A soft hairline divider, gold */
+  .hairline-gold {
+    height: 1px;
+    background: linear-gradient(90deg, transparent 0%, var(--gold) 40%, var(--gold) 60%, transparent 100%);
+  }
+
+  /* Used for the gold underline animation on nav */
+  .gold-underline {
+    background-image: linear-gradient(var(--gold), var(--gold));
+    background-repeat: no-repeat;
+    background-position: 0 100%;
+    background-size: 0% 1.5px;
+    transition: background-size 280ms ease;
+  }
+  .gold-underline:hover,
+  .gold-underline[data-active="true"] {
+    background-size: 100% 1.5px;
+  }
+
+  /* Tabular numerals for counters */
+  .num { font-variant-numeric: tabular-nums; }
 }

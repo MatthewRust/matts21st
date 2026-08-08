@@ -2,7 +2,12 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import Navbar from '../components/Navbar.jsx';
-import { inviteLabelClass, inviteButtonClass } from '../components/InvitationCard.jsx';
+import InvitationPanel, { MotionPanel } from '../components/InvitationPanel.jsx';
+import { Flourish, WaxSeal } from '../components/Flourish.jsx';
+import {
+  PageTransition, FadeIn, StaggerGroup, StaggerItem, motion, AnimatePresence,
+} from '../components/MotionPrimitives.jsx';
+import { inviteButtonClass } from '../components/InvitationCard.jsx';
 import { resolveAvatar } from '../utils/resolveAvatar.js';
 import { DAYS } from './Schedule.jsx';
 
@@ -10,35 +15,15 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 const EVENT_START = new Date('2026-09-03T16:00:00+01:00');
 
 const NAV_CARDS = [
-  { to: '/announcements',    icon: '', title: 'News',             subtitle: 'The latest word from the host.' },
-  { to: '/schedule',         icon: '', title: 'Schedule',         subtitle: 'Five days, planned to the hour.' },
-  { to: '/drinks',           icon: '', title: 'The Tally',        subtitle: 'Count pints, log spend.' },
-  { to: '/leaderboard',      icon: '', title: 'Leaderboard',      subtitle: 'Who leads the charge.' },
-  { to: '/travel',           icon: '', title: 'Travel',           subtitle: 'Rides and public transport.' },
-  { to: '/packing',          icon: '', title: 'Packing',          subtitle: 'What to bring along.' },
-  { to: '/rules',            icon: '', title: 'Rules',            subtitle: 'The lay of the land.' },
-  { to: '/profile',          icon: '', title: 'Profile',          subtitle: 'Your details and travel plans.' },
+  { to: '/announcements', title: 'News',        subtitle: 'Latest updates from Matt.' },
+  { to: '/schedule',      title: 'Schedule',    subtitle: "What's on, day by day." },
+  { to: '/drinks',        title: 'The Tally',   subtitle: 'Count pints, log spend.' },
+  { to: '/leaderboard',   title: 'Leaderboard', subtitle: "Who's drinking the most." },
+  { to: '/travel',        title: 'Travel',      subtitle: 'Lifts and public transport.' },
+  { to: '/packing',       title: 'Packing',     subtitle: 'What to bring.' },
+  { to: '/rules',         title: 'Rules',       subtitle: 'House rules.' },
+  { to: '/profile',       title: 'Profile',     subtitle: 'Your details and travel plans.' },
 ];
-
-// ─── Decorations ─────────────────────────────────────────────────────────────
-
-function StarDivider() {
-  return (
-    <div className="font-invite tracking-[0.6em] text-stone-900 text-center my-8 select-none text-xl drop-shadow-[0_1px_0_rgba(247,241,227,0.9)]">
-      ★ · ★ · ★
-    </div>
-  );
-}
-
-function WaxSeal() {
-  return (
-    <div className="flex justify-center -mt-6 mb-6 select-none">
-      <div className="w-14 h-14 rounded-full bg-red-900 text-parchment text-stone-50 flex items-center justify-center shadow-lg rotate-[-8deg] ring-2 ring-red-950/60">
-        <span className="font-invite text-2xl leading-none">★</span>
-      </div>
-    </div>
-  );
-}
 
 // ─── Countdown ───────────────────────────────────────────────────────────────
 
@@ -52,32 +37,48 @@ function useCountdown(target) {
   return { ms, days: Math.floor(ms / 86_400_000), hours: Math.floor(ms / 3_600_000) };
 }
 
-function CountdownStrip() {
+function Countdown() {
   const { ms, days, hours } = useCountdown(EVENT_START);
-  let body;
+
   if (ms <= 0) {
-    body = <>It's happening!</>;
-  } else if (days < 1) {
-    body = <><span className="font-invite text-3xl text-stone-900">{hours}</span> hours until the carriage rolls in.</>;
-  } else {
-    body = <><span className="font-invite text-3xl text-stone-900">{days}</span> days until the carriage rolls in.</>;
+    return (
+      <InvitationPanel variant="strip" className="text-center font-hand text-2xl text-ink">
+        It's happening!
+      </InvitationPanel>
+    );
   }
+
+  const big = days >= 1 ? days : hours;
+  const unit = days >= 1 ? 'days' : 'hours';
+
   return (
-    <div className="max-w-3xl w-full mx-auto bg-parchment shadow-md ring-1 ring-stone-300/60 px-5 py-3 rotate-[0.4deg] text-center font-hand text-xl text-stone-700 mb-6">
-      {body}
-    </div>
+    <InvitationPanel variant="strip" className="text-center">
+      <div className="flex items-center justify-center gap-3 sm:gap-4">
+        <span className="eyebrow hidden sm:inline">Until Braemar</span>
+        <AnimatePresence mode="popLayout">
+          <motion.span
+            key={big}
+            initial={{ y: 14, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: -14, opacity: 0 }}
+            transition={{ duration: 0.4 }}
+            className="font-invite text-4xl sm:text-5xl text-ink num leading-none"
+          >
+            {big}
+          </motion.span>
+        </AnimatePresence>
+        <span className="font-hand text-xl sm:text-2xl text-ink-soft">{unit}</span>
+        <span className="eyebrow sm:hidden">to go</span>
+      </div>
+    </InvitationPanel>
   );
 }
 
 // ─── Next event from schedule ────────────────────────────────────────────────
 
-// Parse "Thursday 3rd September" + "20:00 – late" into an approximate start Date.
-// The schedule uses 2026 dates encoded in the title; this function only needs
-// to be precise enough to pick "what's coming next".
 const MONTHS = { Sep: 8, September: 8 };
 
 function parseDayDate(title) {
-  // Match the day number (e.g. "3rd", "4th") and month
   const m = title.match(/(\d{1,2})(?:st|nd|rd|th)?\s+(\w+)/i);
   if (!m) return null;
   const day = Number(m[1]);
@@ -105,7 +106,6 @@ function pickNextEvent() {
       }
     }
   }
-  // Fall back to the very first event (so we always render something pre-event)
   const first = DAYS[0];
   return { day: first, event: first.events[0], start: parseEventStart(first.title, first.events[0].time) };
 }
@@ -114,13 +114,17 @@ function NextEventCard() {
   const next = pickNextEvent();
   if (!next) return null;
   return (
-    <div className="max-w-3xl w-full mx-auto bg-parchment shadow-lg ring-1 ring-stone-300/60 px-6 py-5 sm:px-7 sm:py-6 rotate-[0.4deg] mb-6">
-      <p className={inviteLabelClass}>Next on the schedule</p>
-      <p className="font-invite text-2xl sm:text-3xl text-stone-900 mt-1">
-        {next.day.title} · {next.event.time}
+    <InvitationPanel variant="card" className="text-center">
+      <p className="eyebrow">Next up</p>
+      <p className="font-invite text-3xl sm:text-4xl text-ink mt-2">
+        {next.day.title.replace(/ - .*$/, '')}
       </p>
-      <p className="font-hand text-xl text-stone-800 mt-1">{next.event.text}</p>
-    </div>
+      <p className="font-invite text-lg sm:text-xl text-ink-soft mt-1 num">
+        {next.event.time}
+      </p>
+      <div className="hairline-gold w-24 mx-auto my-4" />
+      <p className="font-hand text-2xl text-ink-soft">{next.event.text}</p>
+    </InvitationPanel>
   );
 }
 
@@ -130,7 +134,7 @@ function Avatar({ user, size = 'w-10 h-10' }) {
   const [err, setErr] = useState(false);
   const src = resolveAvatar(user?.profile_pic_url);
   return (
-    <div className={`${size} ring-2 ring-stone-300/60 rounded-full overflow-hidden shrink-0 shadow-md`}>
+    <div className={`${size} ring-2 ring-rule/60 rounded-full overflow-hidden shrink-0 shadow-paper`}>
       {!err && src ? (
         <img
           src={src}
@@ -161,37 +165,35 @@ function AnnouncementsPeek() {
     return () => { cancelled = true; };
   }, []);
 
-  if (items === null) {
-    return <div className="max-w-3xl w-full mx-auto opacity-60 font-hand text-xl text-stone-100 text-center drop-shadow mb-6">Loading the latest…</div>;
-  }
-  if (items.length === 0) return null;
+  if (items === null || items.length === 0) return null;
 
   return (
-    <section className="max-w-3xl w-full mx-auto mb-6">
-      <p className={`${inviteLabelClass} text-center mb-3 text-stone-900 drop-shadow-[0_1px_0_rgba(247,241,227,0.9)] font-semibold`}>
-        Fresh off the press
-      </p>
-      {items.map((item, i) => (
-        <div
-          key={item.aid}
-          className={`bg-parchment shadow-md ring-1 ring-stone-300/60 px-5 py-3 mb-3 flex items-center gap-3 ${i % 2 === 0 ? 'rotate-[0.4deg]' : 'rotate-[-0.4deg]'}`}
-        >
-          <Avatar user={{ username: item.username, profile_pic_url: item.profile_pic_url }} />
-          <div className="flex-1 min-w-0">
-            <p className="font-invite text-xl text-stone-900 truncate">{item.title}</p>
-            <p className="font-hand text-base text-stone-700 truncate">{item.description}</p>
-          </div>
-        </div>
-      ))}
-      <div className="flex justify-center mt-2">
-        <Link
-          to="/announcements"
-          className={`${inviteButtonClass} text-sm px-5 py-2`}
-        >
+    <FadeIn className="max-w-3xl w-full mx-auto">
+      <div className="text-center mb-4">
+        <p className="eyebrow text-parchment/90 drop-shadow">Latest news</p>
+      </div>
+      <StaggerGroup className="space-y-3">
+        {items.map((item) => (
+          <StaggerItem key={item.aid}>
+            <InvitationPanel
+              variant="row"
+              className="flex items-center gap-4"
+            >
+              <Avatar user={{ username: item.username, profile_pic_url: item.profile_pic_url }} />
+              <div className="flex-1 min-w-0">
+                <p className="font-invite text-xl sm:text-2xl text-ink truncate">{item.title}</p>
+                <p className="font-hand text-lg text-ink-soft truncate">{item.description}</p>
+              </div>
+            </InvitationPanel>
+          </StaggerItem>
+        ))}
+      </StaggerGroup>
+      <div className="flex justify-center mt-5">
+        <Link to="/announcements" className={`${inviteButtonClass} text-sm px-5 py-2`}>
           See all news →
         </Link>
       </div>
-    </section>
+    </FadeIn>
   );
 }
 
@@ -218,43 +220,50 @@ function TravelChips() {
 
   if (!stats) return null;
 
-  const Chip = ({ count, label, tilt }) => (
-    <div className={`bg-parchment shadow-md ring-1 ring-stone-300/60 px-5 py-3 ${tilt} text-center min-w-[7rem]`}>
-      <p className="font-invite text-3xl text-stone-900 leading-none">{count}</p>
-      <p className="font-hand text-base text-stone-600 mt-1">{label}</p>
-    </div>
+  const Chip = ({ count, label }) => (
+    <StaggerItem className="flex-1 min-w-[7rem]">
+      <InvitationPanel variant="strip" className="text-center">
+        <p className="font-invite text-4xl text-ink num leading-none">{count}</p>
+        <p className="eyebrow mt-2">{label}</p>
+      </InvitationPanel>
+    </StaggerItem>
   );
 
   return (
-    <section className="max-w-3xl w-full mx-auto flex flex-wrap justify-center gap-4 mb-6">
-      <Chip count={stats.guests} label="guests confirmed" tilt="rotate-[-0.4deg]" />
-      <Chip count={stats.drivers} label="drivers" tilt="rotate-[0.4deg]" />
-      <Chip count={stats.publicTransport} label="on public transport" tilt="rotate-[-0.4deg]" />
-    </section>
+    <StaggerGroup className="max-w-3xl w-full mx-auto flex flex-wrap justify-center gap-4">
+      <Chip count={stats.guests} label="Guests" />
+      <Chip count={stats.drivers} label="Drivers" />
+      <Chip count={stats.publicTransport} label="By rail" />
+    </StaggerGroup>
   );
 }
 
-// ─── Page primitives ─────────────────────────────────────────────────────────
+// ─── Nav card grid ───────────────────────────────────────────────────────────
 
-function NavCard({ to, icon, title, subtitle, tilt }) {
+function NavCard({ to, title, subtitle, tilt }) {
   return (
-    <Link
-      to={to}
-      className={`block bg-parchment shadow-lg ring-1 ring-stone-300/60 px-5 py-6 ${tilt} transition hover:shadow-xl hover:rotate-0`}
-    >
-      <div className="text-4xl leading-none mb-3">{icon}</div>
-      <h3 className="font-invite text-2xl text-stone-900">{title}</h3>
-      <p className="font-hand text-lg text-stone-600 mt-1">{subtitle}</p>
+    <Link to={to} className="block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold rounded-sm">
+      <MotionPanel tilt={tilt} variant="card" className="h-full">
+        <h3 className="font-invite text-2xl sm:text-3xl text-ink leading-tight">{title}</h3>
+        <div className="hairline-gold w-10 my-3" />
+        <p className="font-hand text-lg text-ink-soft">{subtitle}</p>
+        <p className="eyebrow mt-4 text-gold">Open ↗</p>
+      </MotionPanel>
     </Link>
   );
 }
 
+// ─── Info row ────────────────────────────────────────────────────────────────
+
 function InfoRow({ item, tilt }) {
   return (
-    <div className={`bg-parchment shadow-md ring-1 ring-stone-300/60 px-5 py-4 ${tilt} mb-4`}>
-      <h3 className="font-invite text-2xl text-stone-900">{item.title}</h3>
-      <p className="font-hand text-xl text-stone-800 mt-1 whitespace-pre-wrap">{item.body}</p>
-    </div>
+    <StaggerItem>
+      <InvitationPanel variant="card" tilt={tilt}>
+        <h3 className="font-invite text-2xl sm:text-3xl text-ink">{item.title}</h3>
+        <div className="hairline-gold w-10 my-3" />
+        <p className="font-hand text-xl text-ink-soft whitespace-pre-wrap">{item.body}</p>
+      </InvitationPanel>
+    </StaggerItem>
   );
 }
 
@@ -272,73 +281,93 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-tartan flex flex-col">
-      <Navbar />
+    <PageTransition>
+      <div className="min-h-screen bg-tartan">
+        <Navbar />
 
-      <main className="flex-1 flex flex-col items-center p-6 sm:p-12">
+        <main className="flex flex-col items-center px-5 sm:px-10 pb-16 pt-8 sm:pt-12">
 
-        {/* Hero invitation */}
-        <section className="max-w-3xl w-full mx-auto bg-parchment shadow-2xl ring-1 ring-stone-300/60 px-8 py-12 sm:px-12 sm:py-14 rotate-[-0.4deg] text-center mb-2">
-          <p className="font-invite tracking-[0.4em] uppercase text-stone-500 text-xs">
-            You are cordially invited to
-          </p>
-          <h1 className="font-invite text-5xl sm:text-7xl text-stone-900 mt-2 leading-none">
-            Matt's 21st
-          </h1>
-          <div className="border-t border-stone-400 w-32 mx-auto my-5" />
-          <p className="font-hand text-2xl sm:text-3xl text-stone-700">
-            Thursday 3rd – Monday 7th September 2026
-          </p>
-          <p className="font-hand text-xl sm:text-2xl text-stone-600 mt-1">
-            Viewmount, Braemar, Scotland
-          </p>
-          {user?.username && (
-            <p className="font-hand text-lg sm:text-xl text-stone-700 mt-6">
-              Welcome, {user.username}.
-            </p>
+          {/* Hero invitation */}
+          <FadeIn y={20} className="max-w-3xl w-full mx-auto relative">
+            <InvitationPanel variant="hero" className="text-center overflow-hidden">
+              <p className="eyebrow">You're invited to</p>
+              <h1 className="font-invite font-medium text-ink mt-3 leading-[0.92] text-hero">
+                Matt's <span className="italic text-seal">21<span className="text-[0.6em] align-super">st</span></span>
+              </h1>
+              <div className="hairline-gold w-40 mx-auto my-6" />
+              <p className="font-hand text-2xl sm:text-3xl text-ink-soft">
+                Thursday 3<sup>rd</sup> — Monday 7<sup>th</sup> September 2026
+              </p>
+              <p className="font-hand text-xl sm:text-2xl text-ink-faint mt-1">
+                Viewmount · Braemar · Scotland
+              </p>
+              {user?.username && (
+                <p className="font-hand text-lg sm:text-xl text-ink-soft mt-8">
+                  Welcome, <span className="italic">{user.username}</span>.
+                </p>
+              )}
+            </InvitationPanel>
+
+            {/* Wax seal overlapping the hero card */}
+            <div className="absolute left-1/2 -translate-x-1/2 -bottom-7 sm:-bottom-8">
+              <WaxSeal size={88} />
+            </div>
+          </FadeIn>
+
+          {/* Countdown + Next event */}
+          <FadeIn delay={0.1} className="max-w-3xl w-full mx-auto mt-16 mb-4">
+            <Countdown />
+          </FadeIn>
+          <FadeIn delay={0.15} className="max-w-3xl w-full mx-auto mb-2">
+            <NextEventCard />
+          </FadeIn>
+
+          <Flourish />
+
+          <TravelChips />
+
+          <div className="h-10" />
+          <AnnouncementsPeek />
+
+          {/* Event info */}
+          {info && info.length > 0 && (
+            <FadeIn className="max-w-3xl w-full mx-auto mt-12">
+              <div className="text-center mb-5">
+                <p className="eyebrow text-parchment/90 drop-shadow">The details</p>
+              </div>
+              <StaggerGroup className="space-y-4">
+                {info.map((item, i) => (
+                  <InfoRow
+                    key={item.id}
+                    item={item}
+                    tilt={i % 2 === 0 ? 0.3 : -0.3}
+                  />
+                ))}
+              </StaggerGroup>
+            </FadeIn>
           )}
-        </section>
 
-        <WaxSeal />
+          <Flourish />
 
-        <CountdownStrip />
-        <NextEventCard />
+          {/* Nav grid */}
+          <FadeIn className="max-w-5xl w-full mx-auto">
+            <div className="text-center mb-6">
+              <p className="eyebrow text-parchment/90 drop-shadow">Everything else</p>
+            </div>
+            <StaggerGroup
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5"
+              stagger={0.05}
+            >
+              {NAV_CARDS.map((card, i) => (
+                <StaggerItem key={card.to}>
+                  <NavCard {...card} tilt={i % 2 === 0 ? 0.3 : -0.3} />
+                </StaggerItem>
+              ))}
+            </StaggerGroup>
+          </FadeIn>
 
-        <StarDivider />
-
-        <TravelChips />
-        <AnnouncementsPeek />
-
-        {/* Event info */}
-        {info && info.length > 0 && (
-          <section className="max-w-3xl w-full mx-auto mb-2">
-            <p className={`${inviteLabelClass} text-center mb-3 text-stone-900 drop-shadow-[0_1px_0_rgba(247,241,227,0.9)] font-semibold`}>
-              The details
-            </p>
-            {info.map((item, i) => (
-              <InfoRow
-                key={item.id}
-                item={item}
-                tilt={i % 2 === 0 ? 'rotate-[0.4deg]' : 'rotate-[-0.4deg]'}
-              />
-            ))}
-          </section>
-        )}
-
-        <StarDivider />
-
-        {/* Nav grid */}
-        <section className="max-w-4xl w-full mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 [&>*:nth-child(odd)]:sm:mt-0 [&>*:nth-child(even)]:sm:mt-6">
-          {NAV_CARDS.map((card, i) => (
-            <NavCard
-              key={card.to}
-              {...card}
-              tilt={i % 2 === 0 ? 'rotate-[0.4deg]' : 'rotate-[-0.4deg]'}
-            />
-          ))}
-        </section>
-
-      </main>
-    </div>
+        </main>
+      </div>
+    </PageTransition>
   );
 }
