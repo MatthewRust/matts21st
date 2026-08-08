@@ -1,0 +1,64 @@
+/* ─── Design tokens ─────────────────────────────────────────────────────────
+   One source of truth for the invitation aesthetic.
+   Edit a token here and the whole site moves with it.
+─────────────────────────────────────────────────────────────────────────── */
+
+:root {
+  /* Palette ----------------------------------------------------------------*/
+  --ink:            #1c1714;   /* nearly-black warm */
+  --ink-soft:       #4a3f37;
+  --ink-faint:      #837569;
+
+  --parchment:      #f7f1e3;
+  --parchment-deep: #ece2cb;
+  --parchment-shadow: #c9b893;
+
+  --seal:           #7b1a1a;   /* wax red */
+  --seal-deep:      #5b1111;
+  --seal-glow:      #b8323230;
+
+  --gold:           #a98342;   /* dusty heritage gold */
+  --gold-soft:      #c9a25b;
+  --gold-faint:     #e7d6a8;
+
+  --rule:           #c8b89a;
+  --rule-soft:      #d9caa9;
+
+  /* Type scale (clamp for fluid hero) -------------------------------------*/
+  --fs-eyebrow:     0.72rem;
+  --fs-hand-sm:     1.15rem;
+  --fs-hand:        1.35rem;
+  --fs-hand-lg:     1.65rem;
+  --fs-display:     clamp(3.2rem, 6vw + 1rem, 6.5rem);
+  --fs-hero:        clamp(4rem, 9vw + 1rem, 8.5rem);
+
+  /* Shadows ----------------------------------------------------------------*/
+  --shadow-paper:   0 1px 0 rgba(0,0,0,0.04),
+                    0 8px 14px -8px rgba(60, 40, 20, 0.18),
+                    0 20px 40px -22px rgba(60, 40, 20, 0.35);
+  --shadow-lift:    0 1px 0 rgba(0,0,0,0.05),
+                    0 14px 22px -10px rgba(60, 40, 20, 0.30),
+                    0 32px 60px -28px rgba(60, 40, 20, 0.45);
+  --shadow-seal:    0 6px 14px -4px rgba(123, 26, 26, 0.55),
+                    0 2px 4px rgba(0,0,0,0.25),
+                    inset 0 1px 0 rgba(255,255,255,0.18),
+                    inset 0 -3px 6px rgba(0,0,0,0.25);
+
+  /* Misc -------------------------------------------------------------------*/
+  --ring-faint:     rgba(120, 90, 40, 0.25);
+  --focus-ring:     0 0 0 3px rgba(169, 131, 66, 0.55);
+
+  --grain:
+    radial-gradient(at 20% 30%, rgba(120, 90, 40, 0.07) 0, transparent 50%),
+    radial-gradient(at 80% 70%, rgba(120, 90, 40, 0.06) 0, transparent 50%),
+    radial-gradient(at 50% 50%, rgba(120, 90, 40, 0.025) 0, transparent 70%);
+}
+
+/* Reduced motion ----------------------------------------------------------*/
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}

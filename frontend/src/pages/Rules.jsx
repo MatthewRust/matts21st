@@ -1,29 +1,39 @@
 import Navbar from '../components/Navbar.jsx';
-import { inviteLabelClass } from '../components/InvitationCard.jsx';
+import InvitationPanel from '../components/InvitationPanel.jsx';
+import { Flourish } from '../components/Flourish.jsx';
+import { PageTransition, FadeIn } from '../components/MotionPrimitives.jsx';
 
 export default function Rules() {
   return (
-    <div className="min-h-screen bg-tartan flex flex-col">
-      <Navbar />
+    <PageTransition>
+      <div className="min-h-screen bg-tartan">
+        <Navbar />
 
-      <div className="flex-1 flex flex-col items-center p-6 sm:p-12">
-        <div className="max-w-2xl w-full mx-auto bg-parchment shadow-2xl ring-1 ring-stone-300/60 px-6 py-8 sm:px-10 sm:py-10 rotate-[-0.3deg] text-center mb-8">
-          <p className="font-invite tracking-[0.4em] uppercase text-stone-500 text-xs">
-            House law
-          </p>
-          <h1 className="font-invite text-5xl sm:text-6xl text-stone-900 mt-1">Rules</h1>
-          <p className="font-hand text-2xl text-stone-600 mt-1">— the lay of the land —</p>
-        </div>
+        <div className="flex flex-col items-center px-5 sm:px-10 pt-8 pb-16">
+          <FadeIn className="max-w-2xl w-full mx-auto">
+            <InvitationPanel variant="hero" className="text-center">
+              <p className="eyebrow">The house</p>
+              <h1 className="font-invite text-display text-ink mt-2">Rules</h1>
+              <div className="hairline-gold w-32 mx-auto my-4" />
+              <p className="font-hand text-2xl text-ink-soft">— a few ground rules —</p>
+            </InvitationPanel>
+          </FadeIn>
 
-        <div className="max-w-2xl w-full mx-auto">
-          <article className="bg-parchment shadow-lg ring-1 ring-stone-300/60 px-6 py-10 sm:px-8 sm:py-12 rotate-[0.4deg] text-center">
-            <p className={inviteLabelClass}>Coming soon</p>
-            <p className="font-hand text-2xl text-stone-700 mt-3">
-              TODO: contact mother about rules list.
-            </p>
-          </article>
+          <Flourish />
+
+          <FadeIn className="max-w-2xl w-full mx-auto">
+            <InvitationPanel variant="card" tilt={0.3} className="text-center py-12">
+              <p className="eyebrow text-gold">Coming soon</p>
+              <p className="font-hand text-2xl text-ink-soft mt-4">
+                Still being agreed with Mum.
+              </p>
+              <p className="font-hand text-xl text-ink-faint mt-2 italic">
+                Check back soon.
+              </p>
+            </InvitationPanel>
+          </FadeIn>
         </div>
       </div>
-    </div>
+    </PageTransition>
   );
 }

@@ -2,10 +2,10 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import InvitationCard, {
-  inviteInputClass,
-  inviteLabelClass,
-  inviteButtonClass,
+  inviteInputClass, inviteLabelClass, inviteButtonClass,
 } from '../components/InvitationCard.jsx';
+import { WaxSeal } from '../components/Flourish.jsx';
+import { PageTransition, FadeIn } from '../components/MotionPrimitives.jsx';
 
 export default function Login() {
   const { login } = useAuth();
@@ -30,51 +30,62 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen bg-tartan p-6 sm:p-12 flex items-center">
-      <InvitationCard tilt="-rotate-2" maxWidth="max-w-xl">
-        <div className="text-center mb-8">
-          <p className="font-invite tracking-[0.4em] uppercase text-stone-500 text-xs">You are cordially welcomed</p>
-          <h1 className="font-invite text-5xl sm:text-6xl text-stone-900 mt-2">Please, do come in</h1>
-          <p className="font-hand text-2xl text-stone-700 mt-2">— a small matter of identity —</p>
-        </div>
-
-        <form onSubmit={onSubmit} className="space-y-8">
-          <div>
-            <label className={inviteLabelClass}>Your name</label>
-            <input
-              className={inviteInputClass}
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              required
-              autoFocus
-            />
+    <PageTransition>
+      <div className="min-h-screen bg-tartan px-5 sm:px-10 py-12 flex items-center justify-center">
+        <FadeIn className="relative w-full flex justify-center">
+          <div className="absolute -top-7 left-1/2 -translate-x-1/2 z-10">
+            <WaxSeal size={72} />
           </div>
-          <div>
-            <label className={inviteLabelClass}>The secret word</label>
-            <input
-              className={inviteInputClass}
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-          </div>
+          <InvitationCard tilt="rotate-[-1.2deg]" maxWidth="max-w-xl">
+            <div className="text-center mb-10 mt-3">
+              <p className="eyebrow">Welcome back</p>
+              <h1 className="font-invite text-display text-ink mt-3">Sign in</h1>
+              <div className="hairline-gold w-24 mx-auto my-4" />
+              <p className="font-hand text-2xl text-ink-soft">— your name and password —</p>
+            </div>
 
-          {error && (
-            <p className="font-hand text-xl text-red-800">{error}</p>
-          )}
+            <form onSubmit={onSubmit} className="space-y-8">
+              <div>
+                <label className={inviteLabelClass}>Your name</label>
+                <input
+                  className={inviteInputClass}
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  required
+                  autoFocus
+                />
+              </div>
+              <div>
+                <label className={inviteLabelClass}>Password</label>
+                <input
+                  className={inviteInputClass}
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+              </div>
 
-          <div className="flex flex-col items-center gap-4 pt-2">
-            <button type="submit" disabled={submitting} className={inviteButtonClass}>
-              {submitting ? 'Entering…' : 'Enter'}
-            </button>
-            <Link to="/signup" className="font-hand text-xl text-stone-700 underline decoration-dotted underline-offset-4">
-              No invitation yet? Sign up.
-            </Link>
-          </div>
-        </form>
-      </InvitationCard>
-    </div>
+              {error && (
+                <p className="font-hand text-xl text-seal">{error}</p>
+              )}
+
+              <div className="flex flex-col items-center gap-4 pt-2">
+                <button type="submit" disabled={submitting} className={inviteButtonClass}>
+                  {submitting ? 'Signing in…' : 'Sign in'}
+                </button>
+                <Link
+                  to="/signup"
+                  className="font-hand text-xl text-ink-soft underline decoration-dotted underline-offset-4 decoration-gold hover:text-ink"
+                >
+                  Not signed up yet? Sign up.
+                </Link>
+              </div>
+            </form>
+          </InvitationCard>
+        </FadeIn>
+      </div>
+    </PageTransition>
   );
 }
