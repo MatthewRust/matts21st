@@ -274,16 +274,18 @@ export default function CarsPanel() {
               No lifts offered yet.
             </p>
           )}
-          <StaggerGroup>
-            {cars && cars.map((car, i) => (
-              <CarRow
-                key={car.car_id}
-                car={car}
-                onOpen={(c) => { setOpenCarId(c.car_id); setModalError(null); }}
-                tilt={i % 2 === 0 ? 0.3 : -0.3}
-              />
-            ))}
-          </StaggerGroup>
+          {cars && cars.length > 0 && (
+            <StaggerGroup>
+              {cars.map((car, i) => (
+                <CarRow
+                  key={car.car_id}
+                  car={car}
+                  onOpen={(c) => { setOpenCarId(c.car_id); setModalError(null); }}
+                  tilt={i % 2 === 0 ? 0.3 : -0.3}
+                />
+              ))}
+            </StaggerGroup>
+          )}
         </InvitationPanel>
       </FadeIn>
 

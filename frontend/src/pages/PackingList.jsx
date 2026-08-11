@@ -5,7 +5,7 @@ import { PageTransition, FadeIn, StaggerGroup, StaggerItem } from '../components
 
 const ITEMS = [
   { name: 'Outdoorsy outfit',  qty: 1, note: 'For hikes and the outdoors.' },
-  { name: 'Pub outfit',        qty: 1, note: 'Smart-casual for the local.' },
+  { name: 'Pub outfit',        qty: 1, note: 'Pubfit or poufit.' },
   { name: 'Black tie outfit',  qty: 1, note: 'For the formal dinner.' },
   { name: 'Swimming costume',  qty: 1, note: 'For the tub or the Dee.' },
   { name: 'Sports apparel',    qty: 1, note: 'For general sporting activity.' },

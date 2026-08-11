@@ -175,8 +175,7 @@ export default function Announcements() {
         <div className="flex flex-col items-center px-5 sm:px-10 pt-8 pb-16">
           <FadeIn className="max-w-3xl w-full mx-auto mb-8">
             <InvitationPanel variant="hero" className="text-center">
-              <p className="eyebrow">From Matt</p>
-              <h1 className="font-invite text-display text-ink mt-2">Announcements</h1>
+              <h1 className="font-invite text-display text-ink">Announcements</h1>
               <div className="hairline-gold w-32 mx-auto my-5" />
               <p className="font-hand text-2xl text-ink-soft">— the latest —</p>
 
@@ -259,15 +258,17 @@ export default function Announcements() {
                     <p className="font-hand text-xl text-red-200 text-center py-8 drop-shadow">{error}</p>
                   )}
 
-                  <StaggerGroup>
-                    {items.map((item, i) => (
-                      <AnnouncementCard
-                        key={item.aid}
-                        item={item}
-                        tilt={i % 2 === 0 ? 0.3 : -0.3}
-                      />
-                    ))}
-                  </StaggerGroup>
+                  {items.length > 0 && (
+                    <StaggerGroup>
+                      {items.map((item, i) => (
+                        <AnnouncementCard
+                          key={item.aid}
+                          item={item}
+                          tilt={i % 2 === 0 ? 0.3 : -0.3}
+                        />
+                      ))}
+                    </StaggerGroup>
+                  )}
 
                   {hasMore && (
                     <div className="flex justify-center pt-4 pb-6">

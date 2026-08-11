@@ -1,8 +1,8 @@
-# Project context — Matt's 21st
+# Project context — Matthew's 21st
 
-A small web app for guests of Matt's 21st birthday. It gives attendees a single place to:
+A small web app for guests of Matthew's 21st birthday. It gives attendees a single place to:
 
-- Read event info (when, where, dress code, etc.)
+- Read event info (when, where, etc.)
 - Arrange travel / share lifts
 - Upload and browse pictures
 
@@ -102,7 +102,7 @@ Defined in `backend/db/init.sql`, auto-applied by the `postgres:16-alpine` image
 
 **Tables:**
 
-- `event_info(id, title, body, display_order, created_at)` — static content for the homepage. Seeded with When/Where/Dress code rows; edit directly in DB or via a future admin UI.
+- `event_info(id, title, body, display_order, created_at)` — static content for the homepage. Seeded with When/Where rows; edit directly in DB or via a future admin UI. Because the seed only runs on an empty volume, `backend/db/sync-event-info.js` re-applies the canonical rows to an existing database (`docker compose exec backend node db/sync-event-info.js`).
 
 - `users(user_id, username, password, profile_pic_url, driver, car_id, public_transport_id, ex_drinks, daily_drinks, total_drinks)` — every guest who registers. `ex_drinks` (nullable INTEGER) is the self-reported expected number of drinks set at signup. `daily_drinks` (INTEGER NOT NULL DEFAULT 0) is the live per-day tally incremented via `PATCH /api/drinks/:id`; it resets to 0 at 23:59:59 each night via the server-side cron job. `total_drinks` (INTEGER NOT NULL DEFAULT 0) is the cumulative all-time count — it receives `daily_drinks` added to it each night before the reset. `driver` boolean flags whether they offer a car. `car_id` is set when a driver creates a car or a passenger joins one. `public_transport_id` is nullable, reserved for future public-transport linking. Passwords are stored **plain text** for now — hashing (bcrypt) must be added before public deployment.
 
@@ -166,7 +166,7 @@ Postgres credentials in `docker-compose.yml` default to `matts21st` / `devpasswo
   - `.bg-tartan` — tiled `hamiltonTartan.png` (preferred; preserves pattern)
   - `.bg-tartan-stretch` — stretched, available as fallback
 - `.bg-parchment` — cream invitation paper colour with subtle radial gradients
-- `<Navbar>` — shared top navigation bar (`components/Navbar.jsx`) used on all protected pages (Home, Profile, Drinks). Dark `stone-950` strip with Cormorant Garamond text. Links: "Matt's 21st" title → `/`, "Home", "The Tally", profile icon → `/profile`. Active link highlighted in amber. Uses `useLocation` for active-state detection.
+- `<Navbar>` — shared top navigation bar (`components/Navbar.jsx`) used on all protected pages (Home, Profile, Drinks). Dark `stone-950` strip with Cormorant Garamond text. Links: "Matthew's 21st" title → `/`, "Home", "News", "Schedule", "Packing", "Rules", "Travel", profile icon → `/profile`. The Tally and Leaderboard links are commented out while those pages are shelved. Active link highlighted in amber. Uses `useLocation` for active-state detection.
 - `<InvitationCard>` — wrapper component (`components/InvitationCard.jsx`) that applies parchment + shadow + slight rotation. Login uses `-rotate-2`, Signup uses `rotate-[1.5deg]`. Exports `inviteInputClass`, `inviteLabelClass`, and `inviteButtonClass` for consistent form styling (transparent inputs with bottom-border-only "lines to write on", small-caps serif labels, wax-seal-style red submit buttons).
 
 ## What is intentionally not built yet

@@ -10,34 +10,28 @@ export const DAYS = [
     events: [
       { time: '09:00 – 16:00', text: 'Arrive at the property.' },
       { time: '16:00 – 19:00', text: 'Get settled in.' },
-      { time: '19:00 – 20:00', text: 'Tea time: Potato, cauliflower and spinach curry with accoutrements.' },
-      { time: '20:00 – late', text: 'Matthew Quiz Show: is your team of 2 the smartest here?' },
+      { time: '19:00 – 20:00', text: 'Tea time: Potato, cauliflower and spinach curry.' },
+      { time: '20:00 – late', text: 'Matthew Quiz Show.' },
     ],
   },
   {
-    title: 'Friday 4th September - Olympics Day',
+    title: 'Friday 4th September - Sports Day',
     eyebrow: 'Day two',
     events: [
-      { time: '09:00 - late', text: 'Olympics Day: Can your team win gold' },
-      { time: '11:00 – 12:00', text: 'Tennis' },
-      { time: '12:00 – 13:00', text: 'Lunch' },
-      { time: '12:00 – ~14:30', text: 'Scavenger hunt: who can find the most, the fastest.' },
-      { time: '14:30 – 16:00', text: 'Tub and chill' },
-      { time: '16:00 - 19:00', text: 'Games like croque and beer mile' },
+      { time: '09:00 – 19:00', text: 'Sports Day: Can your team win gold' },
       { time: '19:00 – 20:00', text: 'Tea time: BBQ.' },
-      { time: '20:00 - late', text: 'Olympics winners ceromony and after party' },
+      { time: '20:00 – late', text: 'BBQ into the night.' },
     ],
   },
   {
     title: 'Saturday 5th September - Games Day',
     eyebrow: 'Day three',
     events: [
-      { time: '10:00 – 10:45', text: '"High"-K: smoke a J and run a 5K.' },
       { time: '11:00 – 16:00', text: 'Enjoy the games day.' },
       { time: '16:00 – 17:00', text: 'Get ready for dinner.' },
       { time: '17:00 – 19:00', text: 'Cocktails.' },
       { time: '19:00 – 20:00', text: 'Tea time: roast chicken with sides.' },
-      { time: '20:00 – late late', text: 'poker — £10 buy in cash, drinks and good times.' },
+      { time: '20:00 – late late', text: 'Poker.' },
     ],
   },
   {
@@ -48,7 +42,7 @@ export const DAYS = [
       { time: '12:00 – 13:00', text: 'Wake up.' },
       { time: '13:00 – 15:45', text: 'Refreshing hike up Morrone (mandatory for first timers).' },
       { time: '16:00 – 19:00', text: 'Traitors and Games' },
-      { time: '19:00 – 20:00', text: 'Tea time: venison chilli.' },
+      { time: '19:00 – 20:00', text: 'Tea time: chilli.' },
       { time: '20:00 – late', text: 'Traitors Final Round Table' },
     ],
   },
@@ -127,7 +121,6 @@ export default function Schedule() {
               <p className="eyebrow">What's on</p>
               <h1 className="font-invite text-display text-ink mt-2">Schedule</h1>
               <div className="hairline-gold w-32 mx-auto my-5" />
-              <p className="font-hand text-2xl text-ink-soft">— five days in Braemar —</p>
             </InvitationPanel>
           </FadeIn>
 

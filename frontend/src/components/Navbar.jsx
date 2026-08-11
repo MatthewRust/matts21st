@@ -11,8 +11,9 @@ const NAV = [
   { to: '/schedule',      label: 'Schedule' },
   { to: '/packing',       label: 'Packing' },
   { to: '/rules',         label: 'Rules' },
-  { to: '/drinks',        label: 'Tally' },
-  { to: '/leaderboard',   label: 'Leaderboard' },
+  // Shelved for now — the routes are redirected in App.jsx too.
+  // { to: '/drinks',        label: 'Tally' },
+  // { to: '/leaderboard',   label: 'Leaderboard' },
   { to: '/travel',        label: 'Travel' },
 ];
 
@@ -32,7 +33,7 @@ export default function Navbar() {
           >
             <span className="inline-flex items-center gap-2">
               <span className="block w-2 h-2 rounded-full bg-seal shadow-[0_0_0_2px_rgba(169,131,66,0.4)]" />
-              Matt's 21st
+              Matthew's 21st
             </span>
           </Link>
 

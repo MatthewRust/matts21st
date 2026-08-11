@@ -80,9 +80,10 @@ CREATE TABLE IF NOT EXISTS announcements (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- Seed event info rows
+-- Seed event info rows.
+-- Only applied when the database is first created; for an existing database run
+-- `node db/sync-event-info.js` to bring these rows up to date.
 INSERT INTO event_info (title, body, display_order) VALUES
-  ('When', 'Date and time TBD — update this row in the event_info table.', 1),
-  ('Where', 'Venue and address TBD.', 2),
-  ('Dress code', 'TBD.', 3)
+  ('When', 'Thursday 3rd September 2026.', 1),
+  ('Where', 'Viewmount, Braemar, Ballater AB35 5YT.', 2)
 ON CONFLICT DO NOTHING;

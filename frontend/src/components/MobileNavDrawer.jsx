@@ -8,8 +8,9 @@ const LINKS = [
   { to: '/schedule',      label: 'Schedule' },
   { to: '/packing',       label: 'Packing' },
   { to: '/rules',         label: 'Rules' },
-  { to: '/drinks',        label: 'Tally' },
-  { to: '/leaderboard',   label: 'Leaderboard' },
+  // Shelved for now — the routes are redirected in App.jsx too.
+  // { to: '/drinks',        label: 'Tally' },
+  // { to: '/leaderboard',   label: 'Leaderboard' },
   { to: '/travel',        label: 'Travel' },
   { to: '/profile',       label: 'Profile' },
 ];
@@ -90,7 +91,7 @@ export default function MobileNavDrawer({ open, onClose }) {
             </nav>
 
             <div className="mt-auto pt-6 border-t border-rule/40">
-              <p className="font-hand text-xl text-ink-soft">Matt's 21st</p>
+              <p className="font-hand text-xl text-ink-soft">Matthew's 21st</p>
               <p className="eyebrow mt-1">Braemar · Sep 3–7 2026</p>
             </div>
           </motion.aside>
