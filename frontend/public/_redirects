@@ -1,0 +1,4 @@
+# Single-page app: every path is handled by React Router in the browser, so the
+# server must return index.html for any URL rather than looking for a matching
+# file. Without this, deep links and page reloads (/travel, /rules, …) 404.
+/*  /index.html  200

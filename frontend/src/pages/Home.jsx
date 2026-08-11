@@ -300,7 +300,7 @@ export default function Home() {
                 Thursday 3<sup>rd</sup> — Monday 7<sup>th</sup> September 2026
               </p>
               <p className="font-hand text-xl sm:text-2xl text-ink-faint mt-1">
-                Viewmount · Braemar · Scotland
+                Viewmount House · Braemar · Scotland
               </p>
               {user?.username && (
                 <p className="font-hand text-lg sm:text-xl text-ink-soft mt-8">
@@ -347,6 +347,25 @@ export default function Home() {
               </StaggerGroup>
             </FadeIn>
           )}
+
+          <Flourish />
+
+          {/* The house — links out to the cottage listing */}
+          <FadeIn className="max-w-3xl w-full mx-auto">
+            <a
+              href="https://www.unique-cottages.co.uk/cottages/highlands/aberdeen-morayshire/hd8-viewmount-house"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold"
+            >
+              <InvitationPanel variant="strip" lift className="text-center">
+                <p className="eyebrow text-gold">The house</p>
+                <p className="font-invite text-2xl sm:text-3xl text-ink mt-1">
+                  See where we're going ↗
+                </p>
+              </InvitationPanel>
+            </a>
+          </FadeIn>
 
           <Flourish />
 

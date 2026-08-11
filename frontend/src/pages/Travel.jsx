@@ -3,13 +3,14 @@ import Navbar from '../components/Navbar.jsx';
 import InvitationPanel from '../components/InvitationPanel.jsx';
 import CarsPanel from '../components/CarsPanel.jsx';
 import PublicTransportPanel from '../components/PublicTransportPanel.jsx';
+import DirectionsPanel from '../components/DirectionsPanel.jsx';
 import { PageTransition, FadeIn, motion, AnimatePresence } from '../components/MotionPrimitives.jsx';
 
 function Tab({ label, active, onClick }) {
   return (
     <button
       onClick={onClick}
-      className={`relative font-invite uppercase tracking-[0.25em] text-sm px-5 sm:px-6 py-2 transition-colors ${
+      className={`relative font-invite uppercase tracking-[0.18em] sm:tracking-[0.25em] text-xs sm:text-sm px-3 sm:px-6 py-2 transition-colors ${
         active ? 'text-ink' : 'text-ink-faint hover:text-ink-soft'
       }`}
     >
@@ -36,14 +37,15 @@ export default function Travel() {
         <div className="flex flex-col items-center px-5 sm:px-10 pt-8 pb-16">
           <FadeIn className="max-w-3xl w-full mx-auto mb-8">
             <InvitationPanel variant="hero" className="text-center">
-              <p className="eyebrow">Getting to Viewmount, Braemar</p>
+              <p className="eyebrow">Getting to Viewmount House, Braemar</p>
               <h1 className="font-invite text-display text-ink mt-2">Travel</h1>
               <div className="hairline-gold w-32 mx-auto my-5" />
               <p className="font-hand text-2xl text-ink-soft">— by car or by train —</p>
 
-              <div className="flex justify-center gap-2 mt-8 border-b border-rule/60">
+              <div className="flex flex-wrap justify-center gap-x-1 gap-y-2 mt-8 border-b border-rule/60">
                 <Tab label="Cars" active={tab === 'cars'} onClick={() => setTab('cars')} />
                 <Tab label="Public Transport" active={tab === 'public'} onClick={() => setTab('public')} />
+                <Tab label="Directions" active={tab === 'directions'} onClick={() => setTab('directions')} />
               </div>
             </InvitationPanel>
           </FadeIn>
@@ -57,7 +59,9 @@ export default function Travel() {
               transition={{ duration: 0.3 }}
               className="w-full flex justify-center"
             >
-              {tab === 'cars' ? <CarsPanel /> : <PublicTransportPanel />}
+              {tab === 'cars' && <CarsPanel />}
+              {tab === 'public' && <PublicTransportPanel />}
+              {tab === 'directions' && <DirectionsPanel />}
             </motion.div>
           </AnimatePresence>
         </div>
