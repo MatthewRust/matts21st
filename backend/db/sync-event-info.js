@@ -16,7 +16,7 @@ import { pool } from '../src/db.js';
 // The rows the homepage should show, in display order.
 const ROWS = [
   { title: 'When', body: 'Thursday 3rd September 2026.', display_order: 1 },
-  { title: 'Where', body: 'Viewmount, Braemar, Ballater AB35 5YT.', display_order: 2 },
+  { title: 'Where', body: 'Viewmount House, Braemar, Ballater AB35 5YT.', display_order: 2 },
 ];
 
 // Placeholder rows that no longer belong on the page.

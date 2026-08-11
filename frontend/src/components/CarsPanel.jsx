@@ -44,17 +44,37 @@ function formatDeparture(iso) {
   });
 }
 
+/**
+ * Classic saloon in side profile — line-art rather than a solid block, to sit
+ * with the engraved feel of the rest of the invitation.
+ */
 function CarIcon({ className = 'w-10 h-10' }) {
   return (
-    <svg viewBox="0 0 64 32" className={className} fill="none" aria-hidden="true">
+    <svg viewBox="0 0 64 28" className={className} fill="none" aria-hidden="true">
+      {/* body */}
       <path
-        d="M6 22 L10 12 Q12 8 18 8 L46 8 Q52 8 54 12 L58 22"
-        stroke="var(--ink-soft)" strokeWidth="2" strokeLinecap="round" fill="var(--parchment-deep)"
+        d="M3 19.5 L3 16 Q3 13.2 6.4 12.6 L17 10.8 L23.6 5.8 Q25.6 4.4 28.4 4.4
+           L37.6 4.4 Q40.4 4.4 42.4 5.8 L49 10.8 L57.6 12.6 Q61 13.2 61 16 L61 19.5 Z"
+        fill="var(--parchment-deep)"
+        stroke="var(--ink-soft)"
+        strokeWidth="1.4"
+        strokeLinejoin="round"
       />
-      <rect x="2" y="22" width="60" height="6" rx="3" fill="var(--ink-soft)" />
-      <circle cx="16" cy="28" r="4" fill="var(--ink)" />
-      <circle cx="48" cy="28" r="4" fill="var(--ink)" />
-      <path d="M14 16 L24 12 M50 16 L40 12" stroke="var(--gold)" strokeWidth="1" />
+      {/* windows */}
+      <path d="M25.6 10.3 L29.8 6.8 Q30.4 6.4 31.2 6.4 L31.2 10.3 Z" fill="var(--ink-soft)" opacity="0.26" />
+      <path d="M33 6.4 L36.8 6.4 Q37.7 6.4 38.3 6.9 L42.6 10.3 L33 10.3 Z" fill="var(--ink-soft)" opacity="0.26" />
+      {/* beltline */}
+      <path d="M6.5 14.4 L57.5 14.4" stroke="var(--gold)" strokeWidth="0.9" strokeLinecap="round" opacity="0.85" />
+      {/* lamps */}
+      <circle cx="59.4" cy="16.6" r="1" fill="var(--gold-soft)" />
+      <circle cx="4.6" cy="16.6" r="0.9" fill="var(--seal)" opacity="0.7" />
+      {/* wheels */}
+      <circle cx="17" cy="19.6" r="4.6" fill="var(--parchment)" stroke="var(--ink)" strokeWidth="1.6" />
+      <circle cx="47" cy="19.6" r="4.6" fill="var(--parchment)" stroke="var(--ink)" strokeWidth="1.6" />
+      <circle cx="17" cy="19.6" r="1.2" fill="var(--gold)" />
+      <circle cx="47" cy="19.6" r="1.2" fill="var(--gold)" />
+      {/* road */}
+      <path d="M1 25 L63 25" stroke="var(--rule)" strokeWidth="1" strokeLinecap="round" opacity="0.65" />
     </svg>
   );
 }
@@ -77,16 +97,17 @@ function CarRow({ car, onOpen, tilt }) {
         lift
         as="button"
         onClick={() => onOpen(car)}
-        className="w-full text-left mb-5 flex items-center gap-4 sm:gap-6 cursor-pointer"
+        className="w-full text-left mb-5 flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6 cursor-pointer"
         aria-label={`View ${car.driver_name}'s car`}
       >
-        <CarIcon className="w-12 h-8 sm:w-16 sm:h-10 shrink-0" />
-
-        <div className="flex items-center gap-3 shrink-0">
+        {/* Icon, driver and name travel together; below sm they sit on their own
+            line so the seat count underneath gets the full card width. */}
+        <div className="flex items-center gap-3 sm:gap-4 min-w-0 sm:shrink-0">
+          <CarIcon className="w-12 h-8 sm:w-16 sm:h-10 shrink-0" />
           <Avatar user={driverPseudoUser} size="w-12 h-12" ring="ring-2 ring-seal" />
-          <div className="leading-tight">
+          <div className="leading-tight min-w-0">
             <p className="eyebrow text-gold">Driver</p>
-            <p className="font-invite text-xl sm:text-2xl text-ink truncate max-w-[8rem]">
+            <p className="font-invite text-xl sm:text-2xl text-ink truncate">
               {car.driver_name}
             </p>
           </div>
@@ -94,10 +115,11 @@ function CarRow({ car, onOpen, tilt }) {
 
         <div className="hidden sm:block self-stretch w-px bg-rule/60" />
 
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-0 w-full">
           <div className="flex items-baseline justify-between gap-3">
             <p className="eyebrow">Seats</p>
-            <p className="font-invite text-lg text-ink num">
+            {/* nowrap: without it "3 / 5" breaks across lines in a narrow column */}
+            <p className="font-invite text-lg text-ink num whitespace-nowrap">
               {seatsTaken} / {seatsTotal}
             </p>
           </div>

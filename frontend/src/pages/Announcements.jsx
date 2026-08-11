@@ -42,7 +42,7 @@ function AnnouncementCard({ item, tilt }) {
   const author = { username: item.username, profile_pic_url: item.profile_pic_url };
   return (
     <StaggerItem>
-      <InvitationPanel variant="card" tilt={tilt} className="mb-5">
+      <InvitationPanel variant="card" tilt={tilt} className="mb-5 overflow-hidden">
         <header className="flex items-center gap-3 mb-4">
           <Avatar user={author} />
           <div className="flex-1 min-w-0">
@@ -50,9 +50,15 @@ function AnnouncementCard({ item, tilt }) {
             <p className="eyebrow">Posted {formatPosted(item.created_at)}</p>
           </div>
         </header>
-        <h2 className="font-invite text-3xl text-ink mb-2 leading-tight">{item.title}</h2>
+        {/* break-words so a long unbroken word (or a pasted URL) wraps inside
+            the parchment instead of spilling out onto the tartan. */}
+        <h2 className="font-invite text-2xl sm:text-3xl text-ink mb-2 leading-tight break-words">
+          {item.title}
+        </h2>
         <div className="hairline-gold w-10 mb-3" />
-        <p className="font-hand text-xl text-ink-soft whitespace-pre-wrap">{item.description}</p>
+        <p className="font-hand text-lg sm:text-xl text-ink-soft whitespace-pre-wrap break-words">
+          {item.description}
+        </p>
       </InvitationPanel>
     </StaggerItem>
   );

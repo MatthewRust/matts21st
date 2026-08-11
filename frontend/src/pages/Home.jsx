@@ -300,7 +300,7 @@ export default function Home() {
                 Thursday 3<sup>rd</sup> — Monday 7<sup>th</sup> September 2026
               </p>
               <p className="font-hand text-xl sm:text-2xl text-ink-faint mt-1">
-                Viewmount · Braemar · Scotland
+                Viewmount House · Braemar · Scotland
               </p>
               {user?.username && (
                 <p className="font-hand text-lg sm:text-xl text-ink-soft mt-8">
@@ -315,8 +315,25 @@ export default function Home() {
             </div>
           </FadeIn>
 
+          {/* The house — links out to the cottage listing */}
+          <FadeIn delay={0.05} className="max-w-3xl w-full mx-auto mt-16">
+            <a
+              href="https://www.unique-cottages.co.uk/cottages/highlands/aberdeen-morayshire/hd8-viewmount-house"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold"
+            >
+              <InvitationPanel variant="strip" lift className="text-center">
+                <p className="eyebrow text-gold">The house</p>
+                <p className="font-invite text-2xl sm:text-3xl text-ink mt-1">
+                  See where we're going ↗
+                </p>
+              </InvitationPanel>
+            </a>
+          </FadeIn>
+
           {/* Countdown + Next event */}
-          <FadeIn delay={0.1} className="max-w-3xl w-full mx-auto mt-16 mb-4">
+          <FadeIn delay={0.1} className="max-w-3xl w-full mx-auto mt-4 mb-4">
             <Countdown />
           </FadeIn>
           <FadeIn delay={0.15} className="max-w-3xl w-full mx-auto mb-2">

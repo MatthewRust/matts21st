@@ -85,5 +85,5 @@ CREATE TABLE IF NOT EXISTS announcements (
 -- `node db/sync-event-info.js` to bring these rows up to date.
 INSERT INTO event_info (title, body, display_order) VALUES
   ('When', 'Thursday 3rd September 2026.', 1),
-  ('Where', 'Viewmount, Braemar, Ballater AB35 5YT.', 2)
+  ('Where', 'Viewmount House, Braemar, Ballater AB35 5YT.', 2)
 ON CONFLICT DO NOTHING;
