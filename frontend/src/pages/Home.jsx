@@ -293,7 +293,7 @@ export default function Home() {
             <InvitationPanel variant="hero" className="text-center overflow-hidden">
               <p className="eyebrow">You're invited to</p>
               <h1 className="font-invite font-medium text-ink mt-3 leading-[0.92] text-hero">
-                Matt's <span className="italic text-seal">21<span className="text-[0.6em] align-super">st</span></span>
+                Matthew's <span className="italic text-seal">21<span className="text-[0.6em] align-super">st</span></span>
               </h1>
               <div className="hairline-gold w-40 mx-auto my-6" />
               <p className="font-hand text-2xl sm:text-3xl text-ink-soft">

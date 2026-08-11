@@ -11,7 +11,7 @@ export const DAYS = [
       { time: '09:00 – 16:00', text: 'Arrive at the property.' },
       { time: '16:00 – 19:00', text: 'Get settled in.' },
       { time: '19:00 – 20:00', text: 'Tea time: Potato, cauliflower and spinach curry.' },
-      { time: '20:00 – late', text: 'Matthew Quiz Show: is your team of 2 the smartest here?' },
+      { time: '20:00 – late', text: 'Matthew Quiz Show.' },
     ],
   },
   {
@@ -42,7 +42,7 @@ export const DAYS = [
       { time: '12:00 – 13:00', text: 'Wake up.' },
       { time: '13:00 – 15:45', text: 'Refreshing hike up Morrone (mandatory for first timers).' },
       { time: '16:00 – 19:00', text: 'Traitors and Games' },
-      { time: '19:00 – 20:00', text: 'Tea time: venison chilli.' },
+      { time: '19:00 – 20:00', text: 'Tea time: chilli.' },
       { time: '20:00 – late', text: 'Traitors Final Round Table' },
     ],
   },
