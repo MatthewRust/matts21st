@@ -8,8 +8,9 @@ const LINKS = [
   { to: '/schedule',      label: 'Schedule' },
   { to: '/packing',       label: 'Packing' },
   { to: '/rules',         label: 'Rules' },
-  { to: '/drinks',        label: 'Tally' },
-  { to: '/leaderboard',   label: 'Leaderboard' },
+  // Shelved for now — the routes are redirected in App.jsx too.
+  // { to: '/drinks',        label: 'Tally' },
+  // { to: '/leaderboard',   label: 'Leaderboard' },
   { to: '/travel',        label: 'Travel' },
   { to: '/profile',       label: 'Profile' },
 ];

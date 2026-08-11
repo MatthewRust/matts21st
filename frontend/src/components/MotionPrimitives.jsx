@@ -1,4 +1,5 @@
-import { motion, AnimatePresence } from 'framer-motion';
+import { useRef } from 'react';
+import { motion, AnimatePresence, useInView } from 'framer-motion';
 
 const ease = [0.22, 1, 0.36, 1]; // a soft, paper-on-paper easing
 
@@ -31,12 +32,20 @@ export function FadeIn({ as: Tag = 'div', delay = 0, y = 14, children, className
   );
 }
 
+// Drives the reveal off `animate` rather than `whileInView`. `whileInView` only
+// hands "show" to the children registered at the moment it fires, so a group
+// that scrolls into view while still empty (fetched lists) leaves any later
+// arrivals stranded on "hidden". `animate` is part of the variant tree, so
+// children that mount afterwards inherit it and reveal themselves.
 export function StaggerGroup({ children, className, stagger = 0.08, delay = 0 }) {
+  const ref = useRef(null);
+  const inView = useInView(ref, { once: true, margin: '-40px' });
+
   return (
     <motion.div
+      ref={ref}
       initial="hidden"
-      whileInView="show"
-      viewport={{ once: true, margin: '-40px' }}
+      animate={inView ? 'show' : 'hidden'}
       variants={{
         hidden: {},
         show: { transition: { staggerChildren: stagger, delayChildren: delay } },

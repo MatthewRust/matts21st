@@ -15,10 +15,11 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 const EVENT_START = new Date('2026-09-03T16:00:00+01:00');
 
 const NAV_CARDS = [
-  { to: '/announcements', title: 'News',        subtitle: 'Latest updates from Matt.' },
+  { to: '/announcements', title: 'News',        subtitle: 'The latest updates.' },
   { to: '/schedule',      title: 'Schedule',    subtitle: "What's on, day by day." },
-  { to: '/drinks',        title: 'The Tally',   subtitle: 'Count pints, log spend.' },
-  { to: '/leaderboard',   title: 'Leaderboard', subtitle: "Who's drinking the most." },
+  // Shelved for now — the routes are redirected in App.jsx too.
+  // { to: '/drinks',        title: 'The Tally',   subtitle: 'Count pints, log spend.' },
+  // { to: '/leaderboard',   title: 'Leaderboard', subtitle: "Who's drinking the most." },
   { to: '/travel',        title: 'Travel',      subtitle: 'Lifts and public transport.' },
   { to: '/packing',       title: 'Packing',     subtitle: 'What to bring.' },
   { to: '/rules',         title: 'Rules',       subtitle: 'House rules.' },
