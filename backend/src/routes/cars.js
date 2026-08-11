@@ -1,5 +1,8 @@
 import { Router } from 'express';
 import { pool } from '../db.js';
+import {
+  validateRequiredInteger, validateOptionalDate, validateOptionalText,
+} from '../lib/validate.js';
 import { createAnnouncement } from '../lib/announce.js';
 
 const router = Router();
@@ -62,9 +65,21 @@ router.get('/:id', async (req, res, next) => {
 // Create a car (driver_id must exist and have driver = true)
 router.post('/', async (req, res, next) => {
   const { driver_id, max_num_passenger, description, departure_time, departure_location } = req.body;
-  if (!driver_id || !max_num_passenger) {
-    return res.status(400).json({ error: 'driver_id and max_num_passenger are required' });
-  }
+
+  const checkedDriver = validateRequiredInteger(driver_id, { field: 'driver_id', min: 1, max: 2 ** 31 - 1 });
+  if (!checkedDriver.ok) return res.status(400).json({ error: checkedDriver.error });
+
+  const checkedSeats = validateRequiredInteger(max_num_passenger, { field: 'max_num_passenger', min: 1, max: 20 });
+  if (!checkedSeats.ok) return res.status(400).json({ error: checkedSeats.error });
+
+  const checkedDesc = validateOptionalText(description, { field: 'description', max: 300 });
+  if (!checkedDesc.ok) return res.status(400).json({ error: checkedDesc.error });
+
+  const checkedLocation = validateOptionalText(departure_location, { field: 'departure_location', max: 200 });
+  if (!checkedLocation.ok) return res.status(400).json({ error: checkedLocation.error });
+
+  const checkedTime = validateOptionalDate(departure_time, { field: 'departure_time' });
+  if (!checkedTime.ok) return res.status(400).json({ error: checkedTime.error });
 
   const client = await pool.connect();
   try {
@@ -72,7 +87,7 @@ router.post('/', async (req, res, next) => {
 
     const { rows: userRows } = await client.query(
       'SELECT driver FROM users WHERE user_id = $1',
-      [driver_id]
+      [checkedDriver.value]
     );
     if (!userRows.length) {
       await client.query('ROLLBACK');
@@ -86,17 +101,17 @@ router.post('/', async (req, res, next) => {
     // Remove any pre-existing cars for this driver to prevent orphan accumulation.
     // (Each driver only ever owns one car at a time; the FK ON DELETE SET NULL
     // will clear car_id on the driver and any passengers automatically.)
-    await client.query('DELETE FROM cars WHERE driver_id = $1', [driver_id]);
+    await client.query('DELETE FROM cars WHERE driver_id = $1', [checkedDriver.value]);
 
     const { rows } = await client.query(
       `INSERT INTO cars (driver_id, max_num_passenger, description, departure_time, departure_location)
        VALUES ($1, $2, $3, $4, $5) RETURNING *`,
-      [driver_id, max_num_passenger, description || null, departure_time || null, departure_location || null]
+      [checkedDriver.value, checkedSeats.value, checkedDesc.value, checkedTime.value, checkedLocation.value]
     );
     const car = rows[0];
 
     // Link car back to the user
-    await client.query('UPDATE users SET car_id = $1 WHERE user_id = $2', [car.car_id, driver_id]);
+    await client.query('UPDATE users SET car_id = $1 WHERE user_id = $2', [car.car_id, checkedDriver.value]);
 
     await client.query('COMMIT');
     res.status(201).json(car);
@@ -111,17 +126,36 @@ router.post('/', async (req, res, next) => {
 // Edit car details
 router.patch('/:id', async (req, res, next) => {
   try {
-    const allowed = ['max_num_passenger', 'description', 'departure_time', 'departure_location'];
+    // Field names below are literals, never taken from the request body — the
+    // dynamic SET clause built further down interpolates only these keys.
     const updates = {};
 
-    for (const key of allowed) {
-      if (req.body[key] !== undefined) {
-        if (key === 'max_num_passenger') {
-          updates[key] = Number(req.body[key]);
-        } else {
-          updates[key] = req.body[key] === '' ? null : req.body[key];
-        }
-      }
+    if (req.body.max_num_passenger !== undefined) {
+      const checked = validateRequiredInteger(req.body.max_num_passenger, {
+        field: 'max_num_passenger', min: 1, max: 20,
+      });
+      if (!checked.ok) return res.status(400).json({ error: checked.error });
+      updates.max_num_passenger = checked.value;
+    }
+
+    if (req.body.description !== undefined) {
+      const checked = validateOptionalText(req.body.description, { field: 'description', max: 300 });
+      if (!checked.ok) return res.status(400).json({ error: checked.error });
+      updates.description = checked.value;
+    }
+
+    if (req.body.departure_location !== undefined) {
+      const checked = validateOptionalText(req.body.departure_location, {
+        field: 'departure_location', max: 200,
+      });
+      if (!checked.ok) return res.status(400).json({ error: checked.error });
+      updates.departure_location = checked.value;
+    }
+
+    if (req.body.departure_time !== undefined) {
+      const checked = validateOptionalDate(req.body.departure_time, { field: 'departure_time' });
+      if (!checked.ok) return res.status(400).json({ error: checked.error });
+      updates.departure_time = checked.value;
     }
 
     const fields = Object.keys(updates);

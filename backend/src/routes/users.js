@@ -4,6 +4,10 @@ import path from 'node:path';
 import fs from 'node:fs';
 import { pool } from '../db.js';
 import { createAnnouncement } from '../lib/announce.js';
+import { hashPassword } from '../lib/password.js';
+import {
+  validateUsername, validatePassword, validateOptionalInteger, validateOptionalDate,
+} from '../lib/validate.js';
 
 const router = Router();
 
@@ -57,9 +61,19 @@ router.post('/', async (req, res, next) => {
       username, password, profile_pic_url, driver = false,
       public_transport_id, ex_drinks, exp_arrival_date, public_transport = false,
     } = req.body;
-    if (!username || !password) {
-      return res.status(400).json({ error: 'username and password are required' });
-    }
+
+    const checkedUsername = validateUsername(username);
+    if (!checkedUsername.ok) return res.status(400).json({ error: checkedUsername.error });
+
+    const checkedPassword = validatePassword(password);
+    if (!checkedPassword.ok) return res.status(400).json({ error: checkedPassword.error });
+
+    const checkedDrinks = validateOptionalInteger(ex_drinks, { field: 'ex_drinks', min: 0, max: 1000 });
+    if (!checkedDrinks.ok) return res.status(400).json({ error: checkedDrinks.error });
+
+    const checkedArrival = validateOptionalDate(exp_arrival_date, { field: 'exp_arrival_date' });
+    if (!checkedArrival.ok) return res.status(400).json({ error: checkedArrival.error });
+
     const { rows } = await pool.query(
       `INSERT INTO users
          (username, password, profile_pic_url, driver, public_transport_id,
@@ -67,13 +81,13 @@ router.post('/', async (req, res, next) => {
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
        RETURNING ${PUBLIC_COLS}`,
       [
-        username,
-        password,
+        checkedUsername.value,
+        await hashPassword(checkedPassword.value),
         profile_pic_url || 'default_pic.png',
-        driver,
+        driver === true || driver === 'true',
         public_transport_id || null,
-        ex_drinks != null ? Number(ex_drinks) : null,
-        exp_arrival_date || null,
+        checkedDrinks.value,
+        checkedArrival.value,
         public_transport === true || public_transport === 'true',
       ]
     );
@@ -100,18 +114,34 @@ router.post('/', async (req, res, next) => {
 // Update user profile (multipart — supports optional avatar upload)
 router.patch('/:id', uploadAvatar.single('profile_pic'), async (req, res, next) => {
   try {
-    const allowed = ['username', 'password', 'exp_arrival_date', 'public_transport', 'driver'];
+    // Field names below are literals, never taken from the request body — the
+    // dynamic SET clause built further down interpolates only these keys.
     const updates = {};
 
-    for (const key of allowed) {
+    if (req.body.username !== undefined) {
+      const checked = validateUsername(req.body.username);
+      if (!checked.ok) return res.status(400).json({ error: checked.error });
+      updates.username = checked.value;
+    }
+
+    // An empty password means "leave it alone" (the edit form sends a blank
+    // field when the user isn't changing it), not "set it to null" — the
+    // column is NOT NULL, so the old behaviour turned that into a 500.
+    if (req.body.password !== undefined && req.body.password !== '') {
+      const checked = validatePassword(req.body.password);
+      if (!checked.ok) return res.status(400).json({ error: checked.error });
+      updates.password = await hashPassword(checked.value);
+    }
+
+    if (req.body.exp_arrival_date !== undefined) {
+      const checked = validateOptionalDate(req.body.exp_arrival_date, { field: 'exp_arrival_date' });
+      if (!checked.ok) return res.status(400).json({ error: checked.error });
+      updates.exp_arrival_date = checked.value;
+    }
+
+    for (const key of ['public_transport', 'driver']) {
       if (req.body[key] !== undefined) {
-        if (key === 'public_transport' || key === 'driver') {
-          updates[key] = req.body[key] === 'true' || req.body[key] === true;
-        } else if (key === 'exp_arrival_date') {
-          updates[key] = req.body[key] === '' ? null : req.body[key];
-        } else {
-          updates[key] = req.body[key] === '' ? null : req.body[key];
-        }
+        updates[key] = req.body[key] === 'true' || req.body[key] === true;
       }
     }
 
