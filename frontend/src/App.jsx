@@ -16,6 +16,7 @@ import Announcements from './pages/Announcements.jsx';
 import Schedule from './pages/Schedule.jsx';
 import PackingList from './pages/PackingList.jsx';
 import Rules from './pages/Rules.jsx';
+import Gallery from './pages/Gallery.jsx';
 
 function AnimatedRoutes() {
   const location = useLocation();
@@ -41,6 +42,8 @@ function AnimatedRoutes() {
         <Route path="/schedule" element={<ProtectedRoute><Schedule /></ProtectedRoute>} />
         <Route path="/packing" element={<ProtectedRoute><PackingList /></ProtectedRoute>} />
         <Route path="/rules" element={<ProtectedRoute><Rules /></ProtectedRoute>} />
+        <Route path="/gallery" element={<ProtectedRoute><Gallery /></ProtectedRoute>} />
+        <Route path="/photos" element={<Navigate to="/gallery" replace />} />
       </Routes>
     </AnimatePresence>
   );

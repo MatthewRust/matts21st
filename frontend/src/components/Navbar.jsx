@@ -15,6 +15,7 @@ const NAV = [
   // { to: '/drinks',        label: 'Tally' },
   // { to: '/leaderboard',   label: 'Leaderboard' },
   { to: '/travel',        label: 'Travel' },
+  { to: '/gallery',       label: 'Gallery' },
 ];
 
 export default function Navbar() {

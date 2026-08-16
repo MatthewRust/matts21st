@@ -1,0 +1,491 @@
+import { useEffect, useState, useCallback } from 'react';
+import Navbar from '../components/Navbar.jsx';
+import InvitationPanel from '../components/InvitationPanel.jsx';
+import {
+  PageTransition, FadeIn, StaggerGroup, StaggerItem, motion, AnimatePresence,
+} from '../components/MotionPrimitives.jsx';
+import {
+  inviteLabelClass, inviteButtonClass, inviteGhostButtonClass,
+} from '../components/InvitationCard.jsx';
+import { thumbUrl, fullUrl } from '../utils/imageUrl.js';
+import { useAuth } from '../context/AuthContext.jsx';
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+const PAGE_SIZE = 24;
+
+/** Matches the backend's multer limit, so oversized files fail before upload. */
+const MAX_FILE_BYTES = 10 * 1024 * 1024;
+
+function formatTaken(iso) {
+  if (!iso) return '';
+  return new Date(iso).toLocaleString('en-GB', {
+    day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit',
+  });
+}
+
+function Tab({ label, active, onClick }) {
+  return (
+    <button
+      onClick={onClick}
+      className={`relative font-invite uppercase tracking-[0.25em] text-sm px-5 sm:px-6 py-2 transition-colors ${
+        active ? 'text-ink' : 'text-ink-faint hover:text-ink-soft'
+      }`}
+    >
+      {label}
+      {active && (
+        <motion.span
+          layoutId="gallery-tab"
+          className="absolute left-2 right-2 -bottom-0.5 h-[2px] bg-gold"
+          transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+        />
+      )}
+    </button>
+  );
+}
+
+/**
+ * One photo in the grid. Rendered as a square parchment tile so a wall of
+ * mixed portrait/landscape phone photos still reads as a tidy grid.
+ */
+function PhotoTile({ item, onOpen }) {
+  const [failed, setFailed] = useState(false);
+
+  return (
+    <StaggerItem>
+      <button
+        type="button"
+        onClick={() => onOpen(item)}
+        className="group relative block w-full aspect-square overflow-hidden bg-parchment ring-1 ring-rule/60 shadow-paper focus-visible:ring-2 focus-visible:ring-gold focus-visible:outline-none"
+      >
+        {failed ? (
+          <span className="absolute inset-0 grid place-items-center font-hand text-lg text-ink-faint px-3 text-center">
+            Couldn't load
+          </span>
+        ) : (
+          <img
+            src={thumbUrl(item.url)}
+            alt={item.description || `Photo by ${item.uploader_name}`}
+            /* Native lazy-loading: with several hundred tiles the browser only
+               fetches what's near the viewport, which is the difference
+               between a usable page and a stalled one on mobile data. */
+            loading="lazy"
+            decoding="async"
+            onError={() => setFailed(true)}
+            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
+          />
+        )}
+
+        {/* Caption veil, only on hover/focus so the grid stays clean */}
+        <span className="absolute inset-x-0 bottom-0 p-2 bg-gradient-to-t from-stone-950/80 to-transparent opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100 transition-opacity">
+          <span className="block font-hand text-base text-parchment truncate text-left">
+            {item.uploader_name}
+          </span>
+        </span>
+      </button>
+    </StaggerItem>
+  );
+}
+
+/** Full-screen viewer. Closes on backdrop click or Escape. */
+function Lightbox({ item, onClose, onPrev, onNext }) {
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key === 'Escape') onClose();
+      if (e.key === 'ArrowLeft') onPrev();
+      if (e.key === 'ArrowRight') onNext();
+    };
+    document.addEventListener('keydown', onKey);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      document.body.style.overflow = prev;
+    };
+  }, [onClose, onPrev, onNext]);
+
+  return (
+    <motion.div
+      className="fixed inset-0 z-50 bg-stone-950/90 backdrop-blur-sm flex flex-col items-center justify-center p-4 sm:p-8"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.2 }}
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-label={item.description || 'Photo'}
+    >
+      <button
+        onClick={onClose}
+        aria-label="Close"
+        className="absolute top-4 right-5 text-4xl leading-none font-invite text-parchment/80 hover:text-parchment"
+      >
+        ×
+      </button>
+
+      <motion.img
+        key={item.picture_id}
+        src={fullUrl(item.url)}
+        alt={item.description || `Photo by ${item.uploader_name}`}
+        onClick={(e) => e.stopPropagation()}
+        initial={{ opacity: 0, scale: 0.97 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.25 }}
+        className="max-h-[78vh] max-w-full object-contain shadow-lift"
+      />
+
+      <div
+        className="mt-4 max-w-xl text-center"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {item.description && (
+          <p className="font-hand text-2xl text-parchment mb-1 break-words">{item.description}</p>
+        )}
+        <p className="eyebrow text-parchment/70">
+          {item.uploader_name} · {formatTaken(item.upload_time)}
+        </p>
+      </div>
+
+      <div className="mt-5 flex gap-3" onClick={(e) => e.stopPropagation()}>
+        <button onClick={onPrev} className={inviteGhostButtonClass + ' !text-parchment !border-parchment/40'}>
+          Previous
+        </button>
+        <button onClick={onNext} className={inviteGhostButtonClass + ' !text-parchment !border-parchment/40'}>
+          Next
+        </button>
+      </div>
+    </motion.div>
+  );
+}
+
+export default function Gallery() {
+  const { user } = useAuth();
+  const [tab, setTab] = useState('gallery');
+
+  const [items, setItems] = useState([]);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [error, setError] = useState(null);
+
+  const [openIndex, setOpenIndex] = useState(null);
+
+  // Upload state. Files are queued and sent one at a time — see handleUpload.
+  const [files, setFiles] = useState([]);
+  const [description, setDescription] = useState('');
+  const [uploading, setUploading] = useState(false);
+  const [progress, setProgress] = useState({ done: 0, of: 0 });
+  const [uploadError, setUploadError] = useState(null);
+  const [uploadNote, setUploadNote] = useState(null);
+
+  function fetchFirstPage() {
+    setLoading(true);
+    return fetch(`${API_URL}/api/pictures?limit=${PAGE_SIZE}&offset=0`)
+      .then((r) => { if (!r.ok) throw new Error(`Server returned ${r.status}`); return r.json(); })
+      .then((data) => { setItems(data.items || []); setTotal(data.total || 0); setError(null); })
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false));
+  }
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`${API_URL}/api/pictures?limit=${PAGE_SIZE}&offset=0`)
+      .then((r) => { if (!r.ok) throw new Error(`Server returned ${r.status}`); return r.json(); })
+      .then((data) => {
+        if (cancelled) return;
+        setItems(data.items || []);
+        setTotal(data.total || 0);
+      })
+      .catch((err) => !cancelled && setError(err.message))
+      .finally(() => !cancelled && setLoading(false));
+    return () => { cancelled = true; };
+  }, []);
+
+  async function loadMore() {
+    if (loadingMore) return;
+    setLoadingMore(true);
+    setError(null);
+    try {
+      const res = await fetch(`${API_URL}/api/pictures?limit=${PAGE_SIZE}&offset=${items.length}`);
+      if (!res.ok) throw new Error(`Server returned ${res.status}`);
+      const data = await res.json();
+      setItems((prev) => [...prev, ...(data.items || [])]);
+      setTotal(data.total ?? total);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoadingMore(false);
+    }
+  }
+
+  function pickFiles(fileList) {
+    setUploadError(null);
+    setUploadNote(null);
+
+    const chosen = Array.from(fileList || []);
+    const tooBig = chosen.filter((f) => f.size > MAX_FILE_BYTES);
+    const ok = chosen.filter((f) => f.size <= MAX_FILE_BYTES);
+
+    if (tooBig.length) {
+      setUploadNote(
+        `${tooBig.length} file${tooBig.length > 1 ? 's were' : ' was'} over 10MB and skipped.`
+      );
+    }
+    setFiles(ok);
+  }
+
+  /**
+   * Uploads the queue one file at a time rather than in parallel.
+   *
+   * Sequential is deliberate: a guest selecting 30 photos on a phone would
+   * otherwise fire 30 simultaneous multipart requests, which mobile networks
+   * handle badly and which gives no usable progress signal. One at a time is
+   * slower in theory but far more reliable, and lets us report "4 of 30".
+   *
+   * A failure part-way keeps the successful uploads — they're already saved —
+   * and reports how many didn't make it.
+   */
+  async function handleUpload(e) {
+    e.preventDefault();
+    if (uploading || files.length === 0) return;
+
+    setUploading(true);
+    setUploadError(null);
+    setUploadNote(null);
+    setProgress({ done: 0, of: files.length });
+
+    const failures = [];
+
+    for (let i = 0; i < files.length; i += 1) {
+      const file = files[i];
+      const body = new FormData();
+      body.append('image', file);
+      body.append('uploader_id', user.user_id);
+      // The caption applies to the batch; sending it per-file keeps the
+      // backend contract unchanged (one description column per picture).
+      if (description.trim()) body.append('description', description.trim());
+
+      try {
+        const res = await fetch(`${API_URL}/api/pictures`, { method: 'POST', body });
+        if (!res.ok) {
+          const errBody = await res.json().catch(() => ({}));
+          throw new Error(errBody.error || `Server returned ${res.status}`);
+        }
+      } catch (err) {
+        failures.push(`${file.name}: ${err.message}`);
+      }
+      setProgress({ done: i + 1, of: files.length });
+    }
+
+    setUploading(false);
+
+    if (failures.length === files.length) {
+      setUploadError(failures[0]);
+      return;
+    }
+
+    if (failures.length) {
+      setUploadNote(`${failures.length} of ${files.length} didn't upload. ${failures[0]}`);
+    }
+
+    setFiles([]);
+    setDescription('');
+    await fetchFirstPage();
+    setTab('gallery');
+  }
+
+  const closeLightbox = useCallback(() => setOpenIndex(null), []);
+  const showPrev = useCallback(
+    () => setOpenIndex((i) => (i === null ? null : (i - 1 + items.length) % items.length)),
+    [items.length]
+  );
+  const showNext = useCallback(
+    () => setOpenIndex((i) => (i === null ? null : (i + 1) % items.length)),
+    [items.length]
+  );
+
+  const hasMore = items.length < total;
+
+  return (
+    <PageTransition>
+      <div className="min-h-screen bg-tartan">
+        <Navbar />
+
+        <div className="flex flex-col items-center px-5 sm:px-10 pt-8 pb-16">
+          <FadeIn className="max-w-5xl w-full mx-auto mb-8">
+            <InvitationPanel variant="hero" className="text-center">
+              <h1 className="font-invite text-display text-ink">Gallery</h1>
+              <div className="hairline-gold w-32 mx-auto my-5" />
+              <p className="font-hand text-2xl text-ink-soft">
+                {total > 0 ? `— ${total} photo${total === 1 ? '' : 's'} so far —` : '— the weekend, as it happened —'}
+              </p>
+
+              <div className="flex justify-center gap-2 mt-8 border-b border-rule/60">
+                <Tab label="Gallery" active={tab === 'gallery'} onClick={() => setTab('gallery')} />
+                <Tab label="Upload" active={tab === 'upload'} onClick={() => setTab('upload')} />
+              </div>
+            </InvitationPanel>
+          </FadeIn>
+
+          <div className="max-w-5xl w-full mx-auto">
+            <AnimatePresence mode="wait">
+
+              {tab === 'upload' && (
+                <motion.form
+                  key="upload"
+                  onSubmit={handleUpload}
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -12 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <InvitationPanel variant="card" tilt={0.3} className="space-y-6 max-w-2xl mx-auto">
+                    <div>
+                      <label htmlFor="gallery-files" className={inviteLabelClass}>
+                        Photos
+                      </label>
+                      <input
+                        id="gallery-files"
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        onChange={(e) => pickFiles(e.target.files)}
+                        className="w-full font-hand text-xl text-ink file:font-invite file:uppercase file:tracking-[0.2em] file:text-xs file:bg-seal file:text-parchment file:border-0 file:px-5 file:py-2 file:mr-4 file:cursor-pointer hover:file:bg-seal-deep"
+                      />
+                      <p className="font-hand text-lg text-ink-faint mt-2">
+                        Pick as many as you like — up to 10MB each.
+                      </p>
+                    </div>
+
+                    {files.length > 0 && (
+                      <div>
+                        <p className={inviteLabelClass}>{files.length} selected</p>
+                        <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
+                          {files.slice(0, 12).map((f, i) => (
+                            <div key={`${f.name}-${i}`} className="aspect-square overflow-hidden ring-1 ring-rule/60">
+                              <img
+                                src={URL.createObjectURL(f)}
+                                alt=""
+                                /* Revoked once shown — otherwise each preview
+                                   pins its full file in memory, which adds up
+                                   fast when someone selects 30 photos. */
+                                onLoad={(e) => URL.revokeObjectURL(e.currentTarget.src)}
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                          ))}
+                          {files.length > 12 && (
+                            <div className="aspect-square grid place-items-center font-hand text-lg text-ink-soft ring-1 ring-rule/60">
+                              +{files.length - 12}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    <div>
+                      <label htmlFor="gallery-desc" className={inviteLabelClass}>
+                        Caption (optional)
+                      </label>
+                      <textarea
+                        id="gallery-desc"
+                        rows={2}
+                        maxLength={300}
+                        value={description}
+                        onChange={(e) => setDescription(e.target.value)}
+                        placeholder="Where, when, who…"
+                        className="w-full bg-transparent border border-ink/30 focus:border-ink focus:outline-none focus:ring-0 font-hand text-2xl text-ink px-3 py-2 transition-colors"
+                      />
+                      {files.length > 1 && (
+                        <p className="font-hand text-lg text-ink-faint mt-1">
+                          Applied to all {files.length} photos.
+                        </p>
+                      )}
+                    </div>
+
+                    {uploadNote && (
+                      <p className="font-hand text-xl text-ink-soft text-center">{uploadNote}</p>
+                    )}
+                    {uploadError && (
+                      <p className="font-hand text-xl text-seal text-center">{uploadError}</p>
+                    )}
+
+                    <div className="flex justify-center pt-1">
+                      <button type="submit" disabled={uploading || files.length === 0} className={inviteButtonClass}>
+                        {uploading
+                          ? `Uploading ${progress.done} of ${progress.of}…`
+                          : `Add ${files.length || ''} photo${files.length === 1 ? '' : 's'}`.replace('  ', ' ')}
+                      </button>
+                    </div>
+                  </InvitationPanel>
+                </motion.form>
+              )}
+
+              {tab === 'gallery' && (
+                <motion.div
+                  key="gallery"
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -12 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  {loading && (
+                    <p className="font-hand text-2xl text-parchment text-center py-12 drop-shadow">
+                      Loading…
+                    </p>
+                  )}
+                  {error && (
+                    <p className="font-hand text-xl text-red-200 text-center py-8 drop-shadow">{error}</p>
+                  )}
+                  {!loading && !error && items.length === 0 && (
+                    <InvitationPanel variant="card" className="text-center max-w-lg mx-auto">
+                      <p className="font-hand text-2xl text-ink-soft">
+                        No photos yet — be the first.
+                      </p>
+                      <div className="flex justify-center mt-5">
+                        <button type="button" onClick={() => setTab('upload')} className={inviteButtonClass}>
+                          Upload a photo
+                        </button>
+                      </div>
+                    </InvitationPanel>
+                  )}
+
+                  {items.length > 0 && (
+                    <StaggerGroup className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+                      {items.map((item, i) => (
+                        <PhotoTile
+                          key={item.picture_id}
+                          item={item}
+                          onOpen={() => setOpenIndex(i)}
+                        />
+                      ))}
+                    </StaggerGroup>
+                  )}
+
+                  {hasMore && (
+                    <div className="flex justify-center pt-8 pb-4">
+                      <button type="button" onClick={loadMore} disabled={loadingMore} className={inviteButtonClass}>
+                        {loadingMore ? 'Loading…' : 'Load more'}
+                      </button>
+                    </div>
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        </div>
+
+        <AnimatePresence>
+          {openIndex !== null && items[openIndex] && (
+            <Lightbox
+              item={items[openIndex]}
+              onClose={closeLightbox}
+              onPrev={showPrev}
+              onNext={showNext}
+            />
+          )}
+        </AnimatePresence>
+      </div>
+    </PageTransition>
+  );
+}

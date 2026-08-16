@@ -12,6 +12,7 @@ const LINKS = [
   // { to: '/drinks',        label: 'Tally' },
   // { to: '/leaderboard',   label: 'Leaderboard' },
   { to: '/travel',        label: 'Travel' },
+  { to: '/gallery',       label: 'Gallery' },
   { to: '/profile',       label: 'Profile' },
 ];
 
