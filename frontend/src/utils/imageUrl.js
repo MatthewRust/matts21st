@@ -23,7 +23,7 @@ const UPLOAD_MARKER = '/image/upload/';
  * @param {string} url         the `url` column from the pictures table
  * @param {string} transform   e.g. 'w_600,h_600,c_fill,q_auto,f_auto'
  */
-function render(url, transform) {
+export function renderCloudinary(url, transform) {
   if (!url) return null;
 
   if (url.startsWith('/')) return `${API_URL}${url}`;
@@ -42,10 +42,10 @@ function render(url, transform) {
  * the centre — which keeps heads in shot on portrait photos.
  */
 export function thumbUrl(url) {
-  return render(url, 'w_500,h_500,c_fill,g_auto,q_auto,f_auto');
+  return renderCloudinary(url, 'w_500,h_500,c_fill,g_auto,q_auto,f_auto');
 }
 
 /** Full-frame view for the lightbox — bounded, never upscaled, aspect kept. */
 export function fullUrl(url) {
-  return render(url, 'w_1600,h_1600,c_limit,q_auto,f_auto');
+  return renderCloudinary(url, 'w_1600,h_1600,c_limit,q_auto,f_auto');
 }
