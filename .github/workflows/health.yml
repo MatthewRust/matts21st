@@ -5,7 +5,7 @@ on:
     # Free Render services sleep after 15 minutes idle. GitHub's scheduler runs
     # on a best-effort basis and is routinely several minutes late under load,
     # so 14 would regularly slip past the window — 10 leaves headroom.
-    - cron: "*/10 * * * *"
+    - cron: "*/7 * * * *"
   workflow_dispatch:
 
 jobs:
