@@ -171,7 +171,7 @@ function AnnouncementsPeek() {
   return (
     <FadeIn className="max-w-3xl w-full mx-auto">
       <div className="text-center mb-4">
-        <p className="eyebrow text-parchment/90 drop-shadow">Latest news</p>
+        <p className="eyebrow eyebrow-on-tartan">Latest news</p>
       </div>
       <StaggerGroup className="space-y-3">
         {items.map((item) => (
@@ -337,7 +337,7 @@ export default function Home() {
           {info && info.length > 0 && (
             <FadeIn className="max-w-3xl w-full mx-auto mt-12">
               <div className="text-center mb-5">
-                <p className="eyebrow text-parchment/90 drop-shadow">The details</p>
+                <p className="eyebrow eyebrow-on-tartan">The details</p>
               </div>
               <StaggerGroup className="space-y-4">
                 {info.map((item, i) => (
@@ -375,7 +375,7 @@ export default function Home() {
           {/* Nav grid */}
           <FadeIn className="max-w-5xl w-full mx-auto">
             <div className="text-center mb-6">
-              <p className="eyebrow text-parchment/90 drop-shadow">Everything else</p>
+              <p className="eyebrow eyebrow-on-tartan">Everything else</p>
             </div>
             <StaggerGroup
               className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5"

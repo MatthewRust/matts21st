@@ -91,6 +91,21 @@
     font-weight: 500;
   }
 
+  /* Eyebrow sitting directly on the tartan rather than on parchment.
+     The tartan averages a mid-tone teal (~#378588), which is the awkward
+     case: dark text scores 4.0:1 against it and light text 3.95:1, so neither
+     colour alone clears the 4.5:1 wanted for text this small. The parchment
+     halo does the real work — it lifts near-black type off the busy weave
+     instead of relying on the colour difference alone. */
+  .eyebrow-on-tartan {
+    color: var(--ink);
+    font-weight: 600;
+    text-shadow:
+      0 0 3px rgba(247, 241, 227, 0.95),
+      0 0 7px rgba(247, 241, 227, 0.85),
+      0 1px 0 rgba(247, 241, 227, 0.9);
+  }
+
   /* A soft hairline divider, gold */
   .hairline-gold {
     height: 1px;
