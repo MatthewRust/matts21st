@@ -29,7 +29,11 @@
   --fs-hand-sm:     1.15rem;
   --fs-hand:        1.35rem;
   --fs-hand-lg:     1.65rem;
-  --fs-display:     clamp(3.2rem, 6vw + 1rem, 6.5rem);
+  /* Kept in step with `fontSize.display` in tailwind.config.js, which is what
+     the pages actually use. The floor is 2rem, not 3.2rem: a higher floor sits
+     above the fluid term on any phone-width viewport, which stops the heading
+     scaling down and pushes long titles off the parchment. */
+  --fs-display:     clamp(2rem, 6vw + 1rem, 6.5rem);
   --fs-hero:        clamp(4rem, 9vw + 1rem, 8.5rem);
 
   /* Shadows ----------------------------------------------------------------*/

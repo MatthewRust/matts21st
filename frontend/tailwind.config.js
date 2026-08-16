@@ -41,7 +41,13 @@ export default {
       },
       fontSize: {
         eyebrow: ['0.72rem', { letterSpacing: '0.42em', lineHeight: '1' }],
-        display: ['clamp(3.2rem, 6vw + 1rem, 6.5rem)', { lineHeight: '0.95', letterSpacing: '-0.01em' }],
+        // The floor was 3.2rem (51.2px). Because the fluid term only passes
+        // that above a ~587px viewport, every phone was pinned at 51.2px and
+        // the heading never scaled down — long titles ("Announcements") ran
+        // straight off the parchment. Lowering the floor lets the fluid term
+        // do its job on small screens; the slope and cap are unchanged, so
+        // tablet and desktop render exactly as before.
+        display: ['clamp(2rem, 6vw + 1rem, 6.5rem)', { lineHeight: '0.95', letterSpacing: '-0.01em' }],
         hero: ['clamp(4rem, 9vw + 1rem, 8.5rem)', { lineHeight: '0.92', letterSpacing: '-0.02em' }],
       },
     },

@@ -15,7 +15,10 @@ import { motion } from 'framer-motion';
  * animate it, or wrap it in <FadeIn> / <StaggerItem> from MotionPrimitives.
  */
 const variants = {
-  hero:  'px-8 py-12 sm:px-14 sm:py-16 shadow-lift',
+  // Base padding is px-6 rather than px-8 so the widest heading
+  // ("Announcements") still clears the parchment on a 320px phone. The larger
+  // sm: padding is unchanged, so nothing above that breakpoint moves.
+  hero:  'px-6 py-12 sm:px-14 sm:py-16 shadow-lift',
   card:  'px-6 py-7 sm:px-8 sm:py-8 shadow-paper',
   strip: 'px-5 py-3 sm:px-6 sm:py-4 shadow-paper',
   row:   'px-5 py-4 sm:px-6 sm:py-5 shadow-paper',

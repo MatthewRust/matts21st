@@ -88,10 +88,13 @@ export default function Profile() {
 
               <div className="text-center mb-8">
                 <p className="eyebrow">Your profile</p>
+                {/* Usernames are user data and may run to 32 characters, far
+                    longer than any fixed title, so this one needs to be able
+                    to break rather than run off the parchment. */}
                 <h1 className="font-invite text-display text-ink mt-2 leading-[0.95]">
                   Welcome,
                   <br />
-                  <span className="italic">{user?.username}</span>
+                  <span className="italic break-words">{user?.username}</span>
                 </h1>
                 <div className="hairline-gold w-24 mx-auto my-4" />
                 <p className="font-hand text-2xl text-ink-soft">— your details —</p>
