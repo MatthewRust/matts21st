@@ -24,6 +24,15 @@ services:
       NODE_ENV: development
       PORT: 3001
       DATABASE_URL: postgres://${POSTGRES_USER:-matts21st}:${POSTGRES_PASSWORD:-devpassword}@db:5432/${POSTGRES_DB:-matts21st}
+    # Cloudinary credentials come from backend/.env (gitignored), which dotenv
+    # loads inside the container via the ./backend bind mount. They are
+    # deliberately NOT listed under `environment:` — compose would set them to
+    # empty strings when absent from the host shell, and dotenv does not
+    # override keys already present in process.env, so that would silently
+    # disable Cloudinary and fall back to disk.
+    env_file:
+      - path: ./backend/.env
+        required: false
     ports:
       - "3001:3001"
     volumes:
@@ -33,7 +42,7 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    command: npm run dev
+    command: yarn dev
 
   frontend:
     build: ./frontend
@@ -47,7 +56,7 @@ services:
       - /app/node_modules
     depends_on:
       - backend
-    command: npm run dev -- --host 0.0.0.0
+    command: yarn dev --host 0.0.0.0
 
 volumes:
   postgres-data:

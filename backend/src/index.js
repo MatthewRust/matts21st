@@ -42,6 +42,11 @@ app.use('/api/leaderboard', leaderboardRouter);
 // Global error handler — keeps the process alive and returns a JSON error
 app.use((err, _req, res, _next) => {
   console.error('[error]', err.message, err.stack);
+  // Multer rejects oversized or non-image uploads by throwing; that's bad input,
+  // not a server fault, so it must not surface as a 500.
+  if (err.code === 'LIMIT_FILE_SIZE') {
+    return res.status(400).json({ error: 'That image is too large' });
+  }
   const status = err.status || err.statusCode || 500;
   res.status(status).json({ error: err.message || 'Internal server error' });
 });

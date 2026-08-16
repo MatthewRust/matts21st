@@ -1,28 +1,22 @@
 import { Router } from 'express';
 import multer from 'multer';
-import path from 'node:path';
-import fs from 'node:fs';
 import { pool } from '../db.js';
 import { createAnnouncement } from '../lib/announce.js';
 import { hashPassword } from '../lib/password.js';
+import { storeImage, imageFileFilter } from '../lib/storage.js';
 import {
   validateUsername, validatePassword, validateOptionalInteger, validateOptionalDate,
 } from '../lib/validate.js';
 
 const router = Router();
 
-// Ensure uploads directory exists for avatar uploads
-const uploadDir = path.resolve('uploads');
-fs.mkdirSync(uploadDir, { recursive: true });
-
-const avatarStorage = multer.diskStorage({
-  destination: uploadDir,
-  filename: (_req, file, cb) => {
-    const unique = `avatar-${Date.now()}-${Math.round(Math.random() * 1e9)}`;
-    cb(null, `${unique}${path.extname(file.originalname)}`);
-  },
+// Avatars are buffered in memory and handed to storeImage, which routes them to
+// Cloudinary when it's configured and to uploads/ otherwise.
+const uploadAvatar = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: imageFileFilter,
 });
-const uploadAvatar = multer({ storage: avatarStorage, limits: { fileSize: 5 * 1024 * 1024 } });
 
 const PUBLIC_COLS = [
   'user_id', 'username', 'profile_pic_url', 'driver', 'car_id',
@@ -68,7 +62,7 @@ router.post('/', async (req, res, next) => {
     const checkedPassword = validatePassword(password);
     if (!checkedPassword.ok) return res.status(400).json({ error: checkedPassword.error });
 
-    const checkedDrinks = validateOptionalInteger(ex_drinks, { field: 'ex_drinks', min: 0, max: 1000 });
+    const checkedDrinks = validateOptionalInteger(ex_drinks, { field: 'ex_drinks', min: 0, max: 1000000 });
     if (!checkedDrinks.ok) return res.status(400).json({ error: checkedDrinks.error });
 
     const checkedArrival = validateOptionalDate(exp_arrival_date, { field: 'exp_arrival_date' });
@@ -146,7 +140,12 @@ router.patch('/:id', uploadAvatar.single('profile_pic'), async (req, res, next) 
     }
 
     if (req.file) {
-      updates.profile_pic_url = `/uploads/${req.file.filename}`;
+      const stored = await storeImage(req.file.buffer, {
+        originalName: req.file.originalname,
+        folder: 'avatars',
+        prefix: 'avatar',
+      });
+      updates.profile_pic_url = stored.url;
     }
 
     const fields = Object.keys(updates);

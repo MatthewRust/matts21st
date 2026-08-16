@@ -104,6 +104,7 @@ export default function Signup() {
                   className={inviteInputClass}
                   type="number"
                   min={0}
+                  max={1000000}
                   value={exDrinks}
                   onChange={(e) => setExDrinks(e.target.value)}
                   placeholder="0"

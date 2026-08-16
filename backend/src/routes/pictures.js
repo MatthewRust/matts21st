@@ -1,26 +1,17 @@
 import { Router } from 'express';
 import multer from 'multer';
-import path from 'node:path';
-import fs from 'node:fs';
 import { pool } from '../db.js';
+import { storeImage, imageFileFilter, IMAGE_SIZE_LIMIT } from '../lib/storage.js';
 
 const router = Router();
 
-//Sets the directory/creates it if not there
-const uploadDir = path.resolve('uploads');
-fs.mkdirSync(uploadDir, { recursive: true });
-
-//a multer type that stores a unique filename and the directory to uploads
-const storage = multer.diskStorage({
-  destination: uploadDir,
-  filename: (_req, file, cb) => {
-    const unique = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
-    cb(null, `${unique}${path.extname(file.originalname)}`);
-  },
+//Buffers the file in memory so storeImage can forward it to Cloudinary (or
+//write it to disk when Cloudinary isn't configured)
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: IMAGE_SIZE_LIMIT },
+  fileFilter: imageFileFilter,
 });
-
-//Makes a multer type that can't be more than 25MB
-const upload = multer({ storage, limits: { fileSize: 25 * 1024 * 1024 } });
 
 //Gets all the pictures from the db
 router.get('/', async (_req, res, next) => {
@@ -44,10 +35,16 @@ router.post('/', upload.single('image'), async (req, res, next) => {
     const { uploader_id, description } = req.body;
     if (!uploader_id) return res.status(400).json({ error: 'uploader_id is required' });
 
+    const stored = await storeImage(req.file.buffer, {
+      originalName: req.file.originalname,
+      folder: 'gallery',
+      prefix: 'picture',
+    });
+
     const { rows } = await pool.query(
       `INSERT INTO pictures (uploader_id, description, filename, url)
        VALUES ($1, $2, $3, $4) RETURNING *`,
-      [uploader_id, description || null, req.file.filename, `/uploads/${req.file.filename}`]
+      [uploader_id, description || null, stored.filename, stored.url]
     );
     res.status(201).json(rows[0]);
   } catch (err) {

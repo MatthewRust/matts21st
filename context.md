@@ -85,16 +85,16 @@ Either service can be run directly, but you'll need a local Postgres reachable a
 ```powershell
 # backend
 cd backend
-npm install
-npm run dev
+yarn install
+yarn dev
 
 # frontend (separate terminal)
 cd frontend
-npm install
-npm run dev
+yarn install
+yarn dev
 ```
 
-Note: `npm install` has not been run yet — there are no `package-lock.json` files or `node_modules/` checked in. The Docker build runs `npm install` inside each container.
+Package manager is **Yarn Classic (1.22)** — both packages carry a `yarn.lock` and no `package-lock.json`. Use `yarn install` / `yarn dev`, never npm, or you'll end up with a competing lockfile. Node's bundled `corepack yarn …` works if yarn isn't on your PATH. The Docker build runs `yarn install --frozen-lockfile` inside each container.
 
 ## Database schema
 
@@ -108,7 +108,7 @@ Defined in `backend/db/init.sql`, auto-applied by the `postgres:16-alpine` image
 
 - `cars(car_id, driver_id, max_num_passenger, current_num_passenger, description, departure_time, departure_location)` — one row per car offered. `driver_id` → `users.user_id`. `departure_time` (TIMESTAMPTZ) and `departure_location` (VARCHAR) are both nullable and captured from the signup form. There is a circular FK: `users.car_id` → `cars.car_id`; handled in `init.sql` via `ALTER TABLE … ADD CONSTRAINT` inside a `DO $$` block run after both tables exist.
 
-- `pictures(picture_id, uploader_id, description, url, filename, upload_time)` — photo metadata. `uploader_id` → `users.user_id`. Files live on disk in `backend/uploads/`, served at `/uploads/<filename>`.
+- `pictures(picture_id, uploader_id, description, url, filename, upload_time)` — photo metadata. `uploader_id` → `users.user_id`. With Cloudinary configured, `url` is the absolute `secure_url` and `filename` is the Cloudinary `public_id`; without it, `url` is `/uploads/<filename>` served off local disk. The frontend's `resolveAvatar` handles both (it only prefixes the API host onto root-relative paths).
 
 If you change `init.sql`, you must `docker compose down -v` to re-trigger initialisation — the script only runs on an empty data volume.
 
@@ -119,6 +119,8 @@ Backend reads from `process.env` (see `backend/.env.example`):
 - `PORT` (default 3001)
 - `DATABASE_URL`
 - `NODE_ENV`
+- `CLOUDINARY_CLOUD_NAME` / `CLOUDINARY_API_KEY` / `CLOUDINARY_API_SECRET` — image storage credentials. When all three (or `CLOUDINARY_URL`) are set, avatars and gallery uploads go to Cloudinary; when unset, `backend/src/lib/storage.js` falls back to writing `backend/uploads/` on local disk. **Must be set in production** — disk uploads are container-local and vanish on redeploy.
+- `CLOUDINARY_FOLDER` — root folder in the media library (default `matts21st`); images land under `<folder>/avatars` and `<folder>/gallery`.
 
 Frontend reads `VITE_API_URL` at build time; defaults to `http://localhost:3001` if unset. Compose injects it pointing at the host-mapped backend port.
 
@@ -176,10 +178,10 @@ Postgres credentials in `docker-compose.yml` default to `matts21st` / `devpasswo
 - No admin UI for editing `event_info` (edit DB directly for now)
 - No frontend UI for travel/pictures yet — `Home.jsx` has placeholder cards.
 - Profile **Edit** button is a disabled stub — editing user details is not yet implemented.
-- No profile picture upload — `profile_pic_url` defaults to `'default_pic.png'` (non-existent file); the profile page SVG avatar fallback fires automatically.
-- No image thumbnails, no virus scanning, no S3 — uploads land on the backend container's local disk
+- `profile_pic_url` defaults to `'default_pic.png'` (a non-existent file) until the user uploads an avatar via `PATCH /api/users/:id`; the SVG avatar fallback fires automatically in the meantime.
+- No virus scanning. No gallery page UI yet — the upload API exists but nothing on the frontend uses it. Storage itself is handled: `backend/src/lib/storage.js` uploads to Cloudinary (images capped at 2000px with `quality: auto`) and falls back to local disk when credentials are absent.
 - No tests
-- No production Dockerfiles — current frontend image runs the Vite dev server, not a static build behind nginx
+- No production Dockerfiles — the Docker images here are dev-only (the frontend one runs the Vite dev server). Production is deployed on Render as three hand-configured services (frontend, backend, Postgres); their build/start commands and env vars live in the Render dashboard, not in this repo, so nothing here describes them. There is intentionally no `render.yaml` Blueprint — it would create duplicate services rather than adopt the existing ones. See `DEPLOY.md`.
 - No CI
 
 ## Conventions
