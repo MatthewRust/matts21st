@@ -2,7 +2,8 @@ import { Router } from 'express';
 import multer from 'multer';
 import { pool } from '../db.js';
 import { createAnnouncement } from '../lib/announce.js';
-import { hashPassword } from '../lib/password.js';
+import { hashPassword, verifyPassword } from '../lib/password.js';
+import { requireUser } from '../lib/requireUser.js';
 import { storeImage, imageFileFilter } from '../lib/storage.js';
 import { createToken } from '../lib/token.js';
 import {
@@ -109,8 +110,16 @@ router.post('/', async (req, res, next) => {
 });
 
 // Update user profile (multipart — supports optional avatar upload)
-router.patch('/:id', uploadAvatar.single('profile_pic'), async (req, res, next) => {
+//
+// You may only edit yourself. Previously this route had no authentication at
+// all and accepted a new password, so a single unauthenticated request could
+// take over any account.
+router.patch('/:id', requireUser, uploadAvatar.single('profile_pic'), async (req, res, next) => {
   try {
+    if (Number.parseInt(req.params.id, 10) !== req.userId) {
+      return res.status(403).json({ error: 'You can only edit your own profile' });
+    }
+
     // Field names below are literals, never taken from the request body — the
     // dynamic SET clause built further down interpolates only these keys.
     const updates = {};
@@ -127,6 +136,25 @@ router.patch('/:id', uploadAvatar.single('profile_pic'), async (req, res, next) 
     if (req.body.password !== undefined && req.body.password !== '') {
       const checked = validatePassword(req.body.password);
       if (!checked.ok) return res.status(400).json({ error: checked.error });
+
+      // Knowing the current password is required even though the token already
+      // proves who you are: a token is a long-lived bearer credential, so a
+      // borrowed phone or an unlocked laptop would otherwise be enough to
+      // change the password and lock the real owner out of their own account.
+      const { rows: currentRows } = await pool.query(
+        'SELECT password FROM users WHERE user_id = $1',
+        [req.userId]
+      );
+      if (!currentRows.length) return res.status(404).json({ error: 'User not found' });
+
+      const supplied = req.body.current_password;
+      if (typeof supplied !== 'string' || !supplied) {
+        return res.status(400).json({ error: 'Enter your current password to change it' });
+      }
+      if (!(await verifyPassword(supplied, currentRows[0].password))) {
+        return res.status(403).json({ error: 'Current password is incorrect' });
+      }
+
       updates.password = await hashPassword(checked.value);
     }
 

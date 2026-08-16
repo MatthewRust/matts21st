@@ -39,11 +39,12 @@ function toDatetimeLocal(iso) {
 }
 
 export default function EditProfile() {
-  const { user, updateUser } = useAuth();
+  const { user, updateUser, authHeader } = useAuth();
   const navigate = useNavigate();
 
   const [username, setUsername] = useState(user?.username ?? '');
   const [password, setPassword] = useState('');
+  const [currentPassword, setCurrentPassword] = useState('');
   const [expArrival, setExpArrival] = useState(toDatetimeLocal(user?.exp_arrival_date));
   const [publicTransport, setPublicTransport] = useState(user?.public_transport ?? false);
   const [driver, setDriver] = useState(user?.driver ?? false);
@@ -58,9 +59,18 @@ export default function EditProfile() {
     setError(null);
 
     try {
+      // Fail here rather than making the user wait for a round trip to be told
+      // something the form already knows.
+      if (password && !currentPassword) {
+        throw new Error('Enter your current password to set a new one');
+      }
+
       const fd = new FormData();
       fd.append('username', username);
-      if (password) fd.append('password', password);
+      if (password) {
+        fd.append('password', password);
+        fd.append('current_password', currentPassword);
+      }
       fd.append('exp_arrival_date', expArrival);
       fd.append('public_transport', String(publicTransport));
       fd.append('driver', String(driver));
@@ -68,6 +78,7 @@ export default function EditProfile() {
 
       const res = await fetch(`${API_URL}/api/users/${user.user_id}`, {
         method: 'PATCH',
+        headers: { ...authHeader },
         body: fd,
       });
 
@@ -133,11 +144,30 @@ export default function EditProfile() {
                   <input
                     className={inviteInputClass}
                     type="password"
+                    autoComplete="new-password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
                   />
                 </div>
+
+                {/* Only asked for when a new password has actually been typed,
+                    so the common edit (name, arrival time, photo) doesn't make
+                    people re-enter a password for no reason. */}
+                {password && (
+                  <div>
+                    <label className={inviteLabelClass}>Current password</label>
+                    <input
+                      className={inviteInputClass}
+                      type="password"
+                      autoComplete="current-password"
+                      value={currentPassword}
+                      onChange={(e) => setCurrentPassword(e.target.value)}
+                      placeholder="••••••••"
+                      required
+                    />
+                  </div>
+                )}
 
                 <div>
                   <label className={inviteLabelClass}>Expected arrival time</label>
