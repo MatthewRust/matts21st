@@ -309,9 +309,12 @@ export default function Home() {
               )}
             </InvitationPanel>
 
-            {/* Wax seal overlapping the hero card */}
+            {/* Wax seal overlapping the hero card.
+                Smaller on phones: at 88px it reached 60px above the card's
+                bottom edge, past the 48px of padding, and sat on top of the
+                "Welcome, name" line. 64px clears it. */}
             <div className="absolute left-1/2 -translate-x-1/2 -bottom-7 sm:-bottom-8">
-              <WaxSeal size={88} />
+              <WaxSeal sizeClass="w-16 h-16 sm:w-[88px] sm:h-[88px]" />
             </div>
           </FadeIn>
 

@@ -39,12 +39,19 @@ export function Flourish({ className = '', tone = 'ink' }) {
 
 /* ─── Wax seal ──────────────────────────────────────────────────────────── */
 
-/** A pressed-wax seal SVG with the letter M and a tiny ribbon underneath. */
-export function WaxSeal({ size = 96, letter = 'M', className = '' }) {
+/**
+ * A pressed-wax seal SVG with the letter M and a tiny ribbon underneath.
+ *
+ * `size` fixes the seal in pixels. Pass `sizeClass` instead when it needs to
+ * change across breakpoints — a fixed inline width can't respond to one, and
+ * the seal overlaps content on the home page, so its footprint has to shrink
+ * on narrow screens.
+ */
+export function WaxSeal({ size = 96, sizeClass, letter = 'M', className = '' }) {
   return (
     <motion.div
-      className={`relative inline-block ${className}`}
-      style={{ width: size, height: size }}
+      className={`relative inline-block ${sizeClass ?? ''} ${className}`}
+      style={sizeClass ? undefined : { width: size, height: size }}
       initial={{ scale: 0, rotate: -90, opacity: 0 }}
       animate={{ scale: 1, rotate: -8, opacity: 1 }}
       transition={{ type: 'spring', stiffness: 200, damping: 14, delay: 0.25 }}

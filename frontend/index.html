@@ -4,11 +4,12 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <!-- SVG favicon stays crisp at every size and is what desktop browsers
-         pick up. The PNG is the fallback for iOS, which ignores SVG icons and
-         uses this for home-screen bookmarks. -->
+    <!-- SVG only, deliberately. Safari has supported SVG favicons since 16.4,
+         so this covers current iOS as well as desktop. A PNG apple-touch-icon
+         would additionally cover home-screen bookmarks on older iOS, but the
+         one generated previously shipped corrupt and rendered as coloured
+         banding on iPhone — better no icon than a broken one. -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 
     <!-- Tints the browser chrome on mobile to match the sticky navbar. -->
     <meta name="theme-color" content="#0c0a09" />
