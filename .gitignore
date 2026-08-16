@@ -70,6 +70,11 @@ web_modules/
 .env.*
 !.env.example
 
+# Local-only project notes. Kept on disk for reference but deliberately out of
+# the public repo, since they describe internal project and hosting setup.
+context.md
+DEPLOY.md
+
 # parcel-bundler cache (https://parceljs.org/)
 .cache
 .parcel-cache
