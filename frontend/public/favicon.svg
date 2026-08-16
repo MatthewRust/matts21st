@@ -9,8 +9,21 @@
   -->
   <circle cx="32" cy="32" r="31" fill="#7b1a1a"/>
   <circle cx="32" cy="32" r="26.5" fill="none" stroke="#c9a25b" stroke-width="1.6" opacity="0.85"/>
-  <text x="32" y="33"
-        text-anchor="middle" dominant-baseline="central"
+  <!--
+    y is the baseline, positioned from the measured ink rather than by
+    dominant-baseline: favicon rasterisers frequently ignore that attribute,
+    and when they do the numerals ride up into the top half.
+
+    Georgia uses old-style figures, so "21" is x-height rather than
+    cap-height. With this baseline the ink runs 22.9→41.25, centring on 32
+    with 22.9 above and 22.75 below.
+
+    x sits left of centre because text-anchor="middle" centres the advance
+    width, which includes the negative letter-spacing trailing the final
+    glyph — 0.69 units of drift without the nudge.
+  -->
+  <text x="31.3" y="41.25"
+        text-anchor="middle"
         font-family="Georgia, 'Times New Roman', 'Cormorant Garamond', serif"
         font-size="34" font-weight="600" letter-spacing="-0.5"
         fill="#f7f1e3">21</text>
