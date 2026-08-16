@@ -248,7 +248,7 @@ function NavCard({ to, title, subtitle, tilt }) {
         <h3 className="font-invite text-2xl sm:text-3xl text-ink leading-tight">{title}</h3>
         <div className="hairline-gold w-10 my-3" />
         <p className="font-hand text-lg text-ink-soft">{subtitle}</p>
-        <p className="eyebrow mt-4 text-gold">Open ↗</p>
+        <p className="eyebrow mt-4 text-gold">Open</p>
       </MotionPanel>
     </Link>
   );
@@ -361,7 +361,7 @@ export default function Home() {
               <InvitationPanel variant="strip" lift className="text-center">
                 <p className="eyebrow text-gold">The house</p>
                 <p className="font-invite text-2xl sm:text-3xl text-ink mt-1">
-                  See where we're going ↗
+                  See where we're going
                 </p>
               </InvitationPanel>
             </a>

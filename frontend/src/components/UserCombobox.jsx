@@ -93,15 +93,35 @@ export default function UserCombobox({
         className="w-full bg-transparent border-0 border-b border-ink/40 focus:border-ink focus:outline-none focus:ring-0 font-hand text-2xl text-ink px-1 py-1 pr-7 transition-colors placeholder:text-ink-faint"
       />
 
-      {/* Caret / clear affordance */}
+      {/* Caret / clear affordance.
+          Drawn as SVG rather than with glyphs like ▾ and ×: those are rendered
+          by whatever font the device picks, which on iOS can substitute an
+          emoji face and break the hand-lettered look. */}
       <button
         type="button"
         tabIndex={-1}
         aria-label={selected ? 'Clear filter' : 'Show list'}
         onClick={() => (selected ? choose({ user_id: null }) : setOpen((o) => !o))}
-        className="absolute right-0 bottom-1.5 text-ink-soft hover:text-ink text-xl leading-none font-invite"
+        className="absolute right-0 bottom-2 text-ink-soft hover:text-ink transition-colors"
       >
-        {selected ? '×' : '▾'}
+        <svg
+          viewBox="0 0 16 16"
+          className="w-4 h-4"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          aria-hidden="true"
+        >
+          {selected ? (
+            <>
+              <path d="M4 4 L12 12" />
+              <path d="M12 4 L4 12" />
+            </>
+          ) : (
+            <path d="M4 6.5 L8 10.5 L12 6.5" />
+          )}
+        </svg>
       </button>
 
       <AnimatePresence>

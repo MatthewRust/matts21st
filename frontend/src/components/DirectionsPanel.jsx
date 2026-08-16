@@ -54,7 +54,7 @@ export default function DirectionsPanel() {
             rel="noopener noreferrer"
             className={`${inviteButtonClass} text-xs px-5 py-2`}
           >
-            Open in Google Maps ↗
+            Open in Google Maps
           </a>
         </div>
       </InvitationPanel>
