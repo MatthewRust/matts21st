@@ -1,0 +1,16 @@
+name: API Health Check
+
+on:
+  schedule:
+    - cron: "*/14 * * * *"
+  workflow_dispatch:
+
+jobs:
+  health-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping API
+        run: |
+          curl --fail --silent --show-error \
+            --max-time 30 \
+            https://matts21st-backend.onrender.com/api/healt
