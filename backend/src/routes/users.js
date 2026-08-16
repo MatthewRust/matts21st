@@ -4,6 +4,7 @@ import { pool } from '../db.js';
 import { createAnnouncement } from '../lib/announce.js';
 import { hashPassword } from '../lib/password.js';
 import { storeImage, imageFileFilter } from '../lib/storage.js';
+import { createToken } from '../lib/token.js';
 import {
   validateUsername, validatePassword, validateOptionalInteger, validateOptionalDate,
 } from '../lib/validate.js';
@@ -96,7 +97,9 @@ router.post('/', async (req, res, next) => {
       console.error('[announce signup]', annErr.message);
     }
 
-    res.status(201).json(rows[0]);
+    // Signup logs you straight in, so it issues a token exactly as login does —
+    // otherwise a new guest couldn't post until they logged out and back in.
+    res.status(201).json({ ...rows[0], token: createToken(rows[0].user_id) });
   } catch (err) {
     if (err.code === '23505') {
       return res.status(409).json({ error: 'Username already taken' });

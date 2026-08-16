@@ -26,6 +26,16 @@ export function AuthProvider({ children }) {
   // If the DB was wiped (docker compose down -v) the stored ID is stale — clear it.
   useEffect(() => {
     if (!user) return;
+
+    // Sessions saved before tokens existed have no way to prove who they are,
+    // so writes would fail with an opaque 401. Clear them and let the user log
+    // in again, which is a far better experience than a button that silently
+    // stops working.
+    if (!user.token) {
+      setUser(null);
+      return;
+    }
+
     fetch(`${API_URL}/api/users/${user.user_id}`)
       .then((r) => {
         if (r.status === 404) {
@@ -100,17 +110,29 @@ export function AuthProvider({ children }) {
     return createdUser;
   }
 
-  // Update the stored user after a profile edit
+  // Update the stored user after a profile edit.
+  //
+  // Profile responses don't carry a token, so keep the existing one rather
+  // than letting an edit silently log the user out.
   function updateUser(updatedUser) {
-    setUser(updatedUser);
+    setUser((prev) => ({ ...updatedUser, token: updatedUser.token ?? prev?.token }));
   }
 
   function logout() {
     setUser(null);
   }
 
+  /**
+   * Authorization header for write requests, or {} when there's no token.
+   *
+   * Spread into a fetch's headers. Returning an empty object rather than a
+   * header with an undefined value keeps the request valid — the server will
+   * answer 401, which is the correct outcome for a missing session.
+   */
+  const authHeader = user?.token ? { Authorization: `Bearer ${user.token}` } : {};
+
   return (
-    <AuthContext.Provider value={{ user, login, signup, logout, updateUser }}>
+    <AuthContext.Provider value={{ user, login, signup, logout, updateUser, authHeader }}>
       {children}
     </AuthContext.Provider>
   );

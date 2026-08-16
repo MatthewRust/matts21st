@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { pool } from '../db.js';
 import { createAnnouncement } from '../lib/announce.js';
+import { requireUser } from '../lib/requireUser.js';
 
 const router = Router();
 
@@ -32,19 +33,47 @@ router.get('/', async (req, res, next) => {
 });
 
 // POST /api/announcements — create an announcement
-// Body: { title, description, user_id }
-router.post('/', async (req, res, next) => {
+// Body: { title, description }
+//
+// The author is taken from the signed token, never from the body. A body field
+// is chosen by the caller, so trusting it would let anyone post as anyone.
+router.post('/', requireUser, async (req, res, next) => {
   try {
     const title = typeof req.body.title === 'string' ? req.body.title.trim() : '';
     const description = typeof req.body.description === 'string' ? req.body.description.trim() : '';
-    const user_id = Number(req.body.user_id);
 
     if (!title) return res.status(400).json({ error: 'title is required' });
     if (!description) return res.status(400).json({ error: 'description is required' });
-    if (!Number.isFinite(user_id)) return res.status(400).json({ error: 'user_id is required' });
 
-    const { rows } = await createAnnouncement({ title, description, user_id });
+    const { rows } = await createAnnouncement({ title, description, user_id: req.userId });
     res.status(201).json(rows[0]);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// DELETE /api/announcements/:id — remove one of your own posts.
+//
+// Ownership is enforced in the WHERE clause rather than by reading the row
+// first and comparing: one statement, so there's no window between the check
+// and the delete, and a post belonging to someone else simply matches nothing.
+router.delete('/:id', requireUser, async (req, res, next) => {
+  try {
+    const aid = Number.parseInt(req.params.id, 10);
+    if (!Number.isInteger(aid)) return res.status(400).json({ error: 'Invalid announcement id' });
+
+    const { rows } = await pool.query(
+      'DELETE FROM announcements WHERE aid = $1 AND user_id = $2 RETURNING aid',
+      [aid, req.userId]
+    );
+
+    if (!rows.length) {
+      // Deliberately the same response whether the post is missing or simply
+      // isn't theirs — otherwise this doubles as a way to probe what exists.
+      return res.status(404).json({ error: 'No such post of yours' });
+    }
+
+    res.json({ deleted: rows[0].aid });
   } catch (err) {
     next(err);
   }

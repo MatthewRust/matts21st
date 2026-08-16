@@ -16,6 +16,13 @@ import { startCronJobs } from './cron.js';
 const app = express();
 const port = process.env.PORT || 3001;
 
+// Render terminates TLS at its edge and forwards on, so without this every
+// request would look like it came from the proxy — and the login rate limiter
+// would throttle all guests as one bucket. `1` trusts exactly one hop (the
+// platform proxy) rather than blindly believing a client-supplied
+// X-Forwarded-For chain.
+app.set('trust proxy', 1);
+
 app.use(cors());
 app.use(express.json());
 app.use('/uploads', express.static('uploads'));
