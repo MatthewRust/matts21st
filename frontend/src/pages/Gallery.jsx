@@ -8,6 +8,7 @@ import {
   inviteLabelClass, inviteButtonClass, inviteGhostButtonClass,
 } from '../components/InvitationCard.jsx';
 import { thumbUrl, fullUrl } from '../utils/imageUrl.js';
+import UserCombobox from '../components/UserCombobox.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
@@ -39,6 +40,24 @@ function Tab({ label, active, onClick }) {
           transition={{ type: 'spring', stiffness: 380, damping: 30 }}
         />
       )}
+    </button>
+  );
+}
+
+/** Segmented-control option for the sort order. */
+function SortOption({ label, active, onClick }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      className={`font-invite uppercase tracking-[0.2em] text-xs px-3 py-1.5 border transition-colors ${
+        active
+          ? 'border-ink/60 text-ink bg-parchment-deep'
+          : 'border-transparent text-ink-soft hover:text-ink'
+      }`}
+    >
+      {label}
     </button>
   );
 }
@@ -170,6 +189,12 @@ export default function Gallery() {
 
   const [openIndex, setOpenIndex] = useState(null);
 
+  // Filters. Both are applied server-side, so changing either restarts
+  // pagination from offset 0 rather than filtering the loaded page.
+  const [sort, setSort] = useState('newest');
+  const [uploaderId, setUploaderId] = useState(null);
+  const [uploaders, setUploaders] = useState([]);
+
   // Upload state. Files are queued and sent one at a time — see handleUpload.
   const [files, setFiles] = useState([]);
   const [description, setDescription] = useState('');
@@ -178,35 +203,64 @@ export default function Gallery() {
   const [uploadError, setUploadError] = useState(null);
   const [uploadNote, setUploadNote] = useState(null);
 
-  function fetchFirstPage() {
+  /** Builds a list URL carrying the current filters, for any page offset. */
+  const picturesUrl = useCallback(
+    (offset) => {
+      const params = new URLSearchParams({
+        limit: String(PAGE_SIZE),
+        offset: String(offset),
+        sort,
+      });
+      if (uploaderId != null) params.set('uploader_id', String(uploaderId));
+      return `${API_URL}/api/pictures?${params.toString()}`;
+    },
+    [sort, uploaderId]
+  );
+
+  const fetchFirstPage = useCallback(() => {
     setLoading(true);
-    return fetch(`${API_URL}/api/pictures?limit=${PAGE_SIZE}&offset=0`)
+    return fetch(picturesUrl(0))
       .then((r) => { if (!r.ok) throw new Error(`Server returned ${r.status}`); return r.json(); })
       .then((data) => { setItems(data.items || []); setTotal(data.total || 0); setError(null); })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
-  }
+  }, [picturesUrl]);
 
+  // Refetches whenever a filter changes, since picturesUrl is rebuilt then.
   useEffect(() => {
     let cancelled = false;
-    fetch(`${API_URL}/api/pictures?limit=${PAGE_SIZE}&offset=0`)
+    setLoading(true);
+    fetch(picturesUrl(0))
       .then((r) => { if (!r.ok) throw new Error(`Server returned ${r.status}`); return r.json(); })
       .then((data) => {
         if (cancelled) return;
         setItems(data.items || []);
         setTotal(data.total || 0);
+        setError(null);
       })
       .catch((err) => !cancelled && setError(err.message))
       .finally(() => !cancelled && setLoading(false));
     return () => { cancelled = true; };
+  }, [picturesUrl]);
+
+  /** Who has posted, for the filter list. Refreshed after a successful upload. */
+  const fetchUploaders = useCallback(() => {
+    return fetch(`${API_URL}/api/pictures/uploaders`)
+      .then((r) => (r.ok ? r.json() : []))
+      .then((data) => setUploaders(Array.isArray(data) ? data : []))
+      // A failed uploader list only costs the filter dropdown, so it must not
+      // surface as a page-level error over the grid.
+      .catch(() => {});
   }, []);
+
+  useEffect(() => { fetchUploaders(); }, [fetchUploaders]);
 
   async function loadMore() {
     if (loadingMore) return;
     setLoadingMore(true);
     setError(null);
     try {
-      const res = await fetch(`${API_URL}/api/pictures?limit=${PAGE_SIZE}&offset=${items.length}`);
+      const res = await fetch(picturesUrl(items.length));
       if (!res.ok) throw new Error(`Server returned ${res.status}`);
       const data = await res.json();
       setItems((prev) => [...prev, ...(data.items || [])]);
@@ -290,7 +344,16 @@ export default function Gallery() {
 
     setFiles([]);
     setDescription('');
-    await fetchFirstPage();
+    fetchUploaders();
+
+    // Make sure the new photos are actually visible. If a filter was hiding
+    // them, clearing it triggers the refetch effect; otherwise refresh in place.
+    if (sort !== 'newest' || uploaderId !== null) {
+      setSort('newest');
+      setUploaderId(null);
+    } else {
+      await fetchFirstPage();
+    }
     setTab('gallery');
   }
 
@@ -305,6 +368,7 @@ export default function Gallery() {
   );
 
   const hasMore = items.length < total;
+  const selectedUploaderName = uploaders.find((u) => u.user_id === uploaderId)?.username;
 
   return (
     <PageTransition>
@@ -316,8 +380,14 @@ export default function Gallery() {
             <InvitationPanel variant="hero" className="text-center">
               <h1 className="font-invite text-display text-ink">Gallery</h1>
               <div className="hairline-gold w-32 mx-auto my-5" />
+              {/* `total` reflects the active filter, so say so rather than
+                  implying a filtered count is the whole gallery. */}
               <p className="font-hand text-2xl text-ink-soft">
-                {total > 0 ? `— ${total} photo${total === 1 ? '' : 's'} so far —` : '— the weekend, as it happened —'}
+                {total === 0
+                  ? '— the weekend, as it happened —'
+                  : uploaderId != null && selectedUploaderName
+                    ? `— ${total} from ${selectedUploaderName} —`
+                    : `— ${total} photo${total === 1 ? '' : 's'} so far —`}
               </p>
 
               <div className="flex justify-center gap-2 mt-8 border-b border-rule/60">
@@ -352,9 +422,6 @@ export default function Gallery() {
                         onChange={(e) => pickFiles(e.target.files)}
                         className="w-full font-hand text-xl text-ink file:font-invite file:uppercase file:tracking-[0.2em] file:text-xs file:bg-seal file:text-parchment file:border-0 file:px-5 file:py-2 file:mr-4 file:cursor-pointer hover:file:bg-seal-deep"
                       />
-                      <p className="font-hand text-lg text-ink-faint mt-2">
-                        Pick as many as you like — up to 10MB each.
-                      </p>
                     </div>
 
                     {files.length > 0 && (
@@ -397,7 +464,7 @@ export default function Gallery() {
                         className="w-full bg-transparent border border-ink/30 focus:border-ink focus:outline-none focus:ring-0 font-hand text-2xl text-ink px-3 py-2 transition-colors"
                       />
                       {files.length > 1 && (
-                        <p className="font-hand text-lg text-ink-faint mt-1">
+                        <p className="font-hand text-lg text-ink-soft mt-1">
                           Applied to all {files.length} photos.
                         </p>
                       )}
@@ -429,6 +496,41 @@ export default function Gallery() {
                   exit={{ opacity: 0, y: -12 }}
                   transition={{ duration: 0.3 }}
                 >
+                  {/* Filter bar. Hidden until there is something to filter —
+                      an empty gallery with sort controls reads as broken. */}
+                  {(items.length > 0 || uploaderId !== null) && (
+                    <InvitationPanel variant="strip" className="mb-5">
+                      <div className="flex flex-col sm:flex-row sm:items-end gap-5 sm:gap-8">
+                        <div className="shrink-0">
+                          <p className={inviteLabelClass}>Order</p>
+                          <div className="flex gap-1 -ml-1">
+                            <SortOption
+                              label="Newest"
+                              active={sort === 'newest'}
+                              onClick={() => setSort('newest')}
+                            />
+                            <SortOption
+                              label="Oldest"
+                              active={sort === 'oldest'}
+                              onClick={() => setSort('oldest')}
+                            />
+                          </div>
+                        </div>
+
+                        <div className="flex-1 min-w-0">
+                          <label className={inviteLabelClass} htmlFor="gallery-uploader">
+                            Taken by
+                          </label>
+                          <UserCombobox
+                            users={uploaders}
+                            value={uploaderId}
+                            onChange={setUploaderId}
+                          />
+                        </div>
+                      </div>
+                    </InvitationPanel>
+                  )}
+
                   {loading && (
                     <p className="font-hand text-2xl text-parchment text-center py-12 drop-shadow">
                       Loading…
@@ -440,12 +542,20 @@ export default function Gallery() {
                   {!loading && !error && items.length === 0 && (
                     <InvitationPanel variant="card" className="text-center max-w-lg mx-auto">
                       <p className="font-hand text-2xl text-ink-soft">
-                        No photos yet — be the first.
+                        {uploaderId != null
+                          ? `Nothing from ${selectedUploaderName ?? 'them'} yet.`
+                          : 'No photos yet — be the first.'}
                       </p>
                       <div className="flex justify-center mt-5">
-                        <button type="button" onClick={() => setTab('upload')} className={inviteButtonClass}>
-                          Upload a photo
-                        </button>
+                        {uploaderId != null ? (
+                          <button type="button" onClick={() => setUploaderId(null)} className={inviteButtonClass}>
+                            Show everyone
+                          </button>
+                        ) : (
+                          <button type="button" onClick={() => setTab('upload')} className={inviteButtonClass}>
+                            Upload a photo
+                          </button>
+                        )}
                       </div>
                     </InvitationPanel>
                   )}
@@ -478,6 +588,7 @@ export default function Gallery() {
         <AnimatePresence>
           {openIndex !== null && items[openIndex] && (
             <Lightbox
+              key="lightbox"
               item={items[openIndex]}
               onClose={closeLightbox}
               onPrev={showPrev}
