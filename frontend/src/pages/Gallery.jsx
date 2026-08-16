@@ -66,11 +66,13 @@ function SortOption({ label, active, onClick }) {
  * One photo in the grid. Rendered as a square parchment tile so a wall of
  * mixed portrait/landscape phone photos still reads as a tidy grid.
  */
-function PhotoTile({ item, onOpen }) {
+function PhotoTile({ item, onOpen, canManage, onDelete, deleting }) {
   const [failed, setFailed] = useState(false);
+  const [confirming, setConfirming] = useState(false);
 
   return (
     <StaggerItem>
+      <div className="relative">
       <button
         type="button"
         onClick={() => onOpen(item)}
@@ -101,6 +103,50 @@ function PhotoTile({ item, onOpen }) {
           </span>
         </span>
       </button>
+
+      {/* Remove control, overlaid rather than nested inside the tile button —
+          a button inside a button is invalid HTML and the click would open the
+          lightbox on the way through. Two-step, since there's no undo. */}
+      {canManage && (
+        <div className="absolute top-1.5 right-1.5">
+          {confirming ? (
+            <div className="flex gap-1">
+              <button
+                type="button"
+                onClick={() => onDelete(item.picture_id)}
+                disabled={deleting}
+                className="font-invite uppercase tracking-[0.15em] text-[0.6rem] px-2 py-1 bg-seal text-parchment hover:bg-seal-deep transition-colors disabled:opacity-60"
+              >
+                {deleting ? '…' : 'Delete'}
+              </button>
+              <button
+                type="button"
+                onClick={() => setConfirming(false)}
+                disabled={deleting}
+                className="font-invite uppercase tracking-[0.15em] text-[0.6rem] px-2 py-1 bg-stone-900/80 text-parchment hover:bg-stone-900 transition-colors"
+              >
+                No
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setConfirming(true)}
+              aria-label="Remove this photo"
+              title="Remove this photo"
+              className="p-1.5 bg-stone-950/70 text-parchment hover:bg-seal transition-colors"
+            >
+              <svg viewBox="0 0 16 16" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M2.5 4.5h11" />
+                <path d="M6.5 4.5V3a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 .5.5v1.5" />
+                <path d="M4 4.5l.6 8a1 1 0 0 0 1 .9h4.8a1 1 0 0 0 1-.9l.6-8" />
+                <path d="M6.8 7v4M9.2 7v4" />
+              </svg>
+            </button>
+          )}
+        </div>
+      )}
+      </div>
     </StaggerItem>
   );
 }
@@ -178,8 +224,14 @@ function Lightbox({ item, onClose, onPrev, onNext }) {
 }
 
 export default function Gallery() {
-  const { user } = useAuth();
+  const { user, authHeader } = useAuth();
   const [tab, setTab] = useState('gallery');
+
+  // Manage mode reveals a remove control on the viewer's own photos. Off by
+  // default so the grid stays a grid.
+  const [managing, setManaging] = useState(false);
+  const [deletingId, setDeletingId] = useState(null);
+  const [deleteError, setDeleteError] = useState(null);
 
   const [items, setItems] = useState([]);
   const [total, setTotal] = useState(0);
@@ -314,13 +366,17 @@ export default function Gallery() {
       const file = files[i];
       const body = new FormData();
       body.append('image', file);
-      body.append('uploader_id', user.user_id);
+      // No uploader_id — the server takes it from the token.
       // The caption applies to the batch; sending it per-file keeps the
       // backend contract unchanged (one description column per picture).
       if (description.trim()) body.append('description', description.trim());
 
       try {
-        const res = await fetch(`${API_URL}/api/pictures`, { method: 'POST', body });
+        const res = await fetch(`${API_URL}/api/pictures`, {
+          method: 'POST',
+          headers: { ...authHeader },
+          body,
+        });
         if (!res.ok) {
           const errBody = await res.json().catch(() => ({}));
           throw new Error(errBody.error || `Server returned ${res.status}`);
@@ -357,6 +413,38 @@ export default function Gallery() {
     setTab('gallery');
   }
 
+  /**
+   * Delete one of your own photos.
+   *
+   * Removes the tile from local state rather than refetching, so the reader
+   * keeps their scroll position and any extra pages they've loaded. `total`
+   * follows so "load more" stays honest, and the uploader counts are
+   * refreshed since one of them just changed.
+   */
+  async function handleDeletePhoto(pictureId) {
+    if (deletingId) return;
+    setDeleteError(null);
+    setDeletingId(pictureId);
+    try {
+      const res = await fetch(`${API_URL}/api/pictures/${pictureId}`, {
+        method: 'DELETE',
+        headers: { ...authHeader },
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error || `Server returned ${res.status}`);
+      }
+      setItems((prev) => prev.filter((i) => i.picture_id !== pictureId));
+      setTotal((t) => Math.max(0, t - 1));
+      setOpenIndex(null);
+      fetchUploaders();
+    } catch (err) {
+      setDeleteError(err.message);
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
   const closeLightbox = useCallback(() => setOpenIndex(null), []);
   const showPrev = useCallback(
     () => setOpenIndex((i) => (i === null ? null : (i - 1 + items.length) % items.length)),
@@ -369,6 +457,7 @@ export default function Gallery() {
 
   const hasMore = items.length < total;
   const selectedUploaderName = uploaders.find((u) => u.user_id === uploaderId)?.username;
+  const ownPhotosLoaded = items.filter((i) => i.uploader_id === user?.user_id).length;
 
   return (
     <PageTransition>
@@ -527,8 +616,34 @@ export default function Gallery() {
                             onChange={setUploaderId}
                           />
                         </div>
+
+                        {/* Only offered once the viewer has a photo in view,
+                            so it never appears with nothing to act on. */}
+                        {ownPhotosLoaded > 0 && (
+                          <div className="shrink-0">
+                            <button
+                              type="button"
+                              onClick={() => { setManaging((m) => !m); setDeleteError(null); }}
+                              aria-pressed={managing}
+                              className={`inline-flex items-center gap-2 font-invite uppercase tracking-[0.2em] text-[0.7rem] px-3 py-1.5 border transition-colors ${
+                                managing
+                                  ? 'border-ink/60 text-ink bg-parchment-deep'
+                                  : 'border-ink/25 text-ink-soft hover:text-ink'
+                              }`}
+                            >
+                              <svg viewBox="0 0 16 16" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                <path d="M11.2 2.6a1.4 1.4 0 0 1 2 2L6 11.8l-2.7.9.9-2.7z" />
+                              </svg>
+                              {managing ? 'Done' : 'Edit mine'}
+                            </button>
+                          </div>
+                        )}
                       </div>
                     </InvitationPanel>
+                  )}
+
+                  {deleteError && (
+                    <p className="font-hand text-xl text-red-200 text-center pb-3 drop-shadow">{deleteError}</p>
                   )}
 
                   {loading && (
@@ -567,6 +682,12 @@ export default function Gallery() {
                           key={item.picture_id}
                           item={item}
                           onOpen={() => setOpenIndex(i)}
+                          // Only your own photos get a control. The server
+                          // enforces this too — this just avoids showing a
+                          // button that would always fail.
+                          canManage={managing && item.uploader_id === user?.user_id}
+                          onDelete={handleDeletePhoto}
+                          deleting={deletingId === item.picture_id}
                         />
                       ))}
                     </StaggerGroup>

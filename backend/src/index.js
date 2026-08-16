@@ -46,16 +46,29 @@ app.use('/api/spending', spendingRouter);
 app.use('/api/announcements', announcementsRouter);
 app.use('/api/leaderboard', leaderboardRouter);
 
-// Global error handler — keeps the process alive and returns a JSON error
+// Global error handler — keeps the process alive and returns a JSON error.
+//
+// The full error always goes to the server log; what reaches the client
+// depends on whether we meant to send it. Errors carrying an explicit 4xx
+// status were raised deliberately and their messages are written for the user
+// ("That image is too large"), so they pass through. Anything else is an
+// unexpected fault, and its message could be a Postgres error naming columns
+// or a stack-adjacent detail — so the client gets a fixed string instead.
 app.use((err, _req, res, _next) => {
   console.error('[error]', err.message, err.stack);
+
   // Multer rejects oversized or non-image uploads by throwing; that's bad input,
   // not a server fault, so it must not surface as a 500.
   if (err.code === 'LIMIT_FILE_SIZE') {
     return res.status(400).json({ error: 'That image is too large' });
   }
+
   const status = err.status || err.statusCode || 500;
-  res.status(status).json({ error: err.message || 'Internal server error' });
+  const isDeliberate = status >= 400 && status < 500;
+
+  res.status(status).json({
+    error: isDeliberate && err.message ? err.message : 'Something went wrong. Please try again.',
+  });
 });
 
 app.listen(port, () => {

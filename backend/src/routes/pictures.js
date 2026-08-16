@@ -1,8 +1,9 @@
 import { Router } from 'express';
 import multer from 'multer';
 import { pool } from '../db.js';
-import { storeImage, imageFileFilter, IMAGE_SIZE_LIMIT } from '../lib/storage.js';
+import { storeImage, deleteImage, imageFileFilter, IMAGE_SIZE_LIMIT } from '../lib/storage.js';
 import { validateOptionalText } from '../lib/validate.js';
+import { requireUser } from '../lib/requireUser.js';
 
 const router = Router();
 
@@ -90,12 +91,14 @@ router.get('/', async (req, res, next) => {
   }
 });
 
-//When getting a request if its not a file return 400 then upload the image and insert its url into the database then return 201
-router.post('/', upload.single('image'), async (req, res, next) => {
+// Upload a photo. The uploader is taken from the signed token, not the body:
+// besides preventing someone from posting under another guest's name, this
+// keeps the endpoint from being an open image host for anyone who finds it,
+// which would land on the free Cloudinary tier's storage and bandwidth.
+router.post('/', requireUser, upload.single('image'), async (req, res, next) => {
   try {
     if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
-    const { uploader_id, description } = req.body;
-    if (!uploader_id) return res.status(400).json({ error: 'uploader_id is required' });
+    const { description } = req.body;
 
     const checkedDescription = validateOptionalText(description, { field: 'description', max: 300 });
     if (!checkedDescription.ok) return res.status(400).json({ error: checkedDescription.error });
@@ -109,9 +112,43 @@ router.post('/', upload.single('image'), async (req, res, next) => {
     const { rows } = await pool.query(
       `INSERT INTO pictures (uploader_id, description, filename, url)
        VALUES ($1, $2, $3, $4) RETURNING *`,
-      [uploader_id, checkedDescription.value, stored.filename, stored.url]
+      [req.userId, checkedDescription.value, stored.filename, stored.url]
     );
     res.status(201).json(rows[0]);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// DELETE /api/pictures/:id — remove one of your own photos.
+//
+// Ownership lives in the WHERE clause rather than a read-then-compare, so
+// there's no window between the check and the delete, and someone else's photo
+// simply matches nothing.
+router.delete('/:id', requireUser, async (req, res, next) => {
+  try {
+    const pictureId = Number.parseInt(req.params.id, 10);
+    if (!Number.isInteger(pictureId)) return res.status(400).json({ error: 'Invalid picture id' });
+
+    const { rows } = await pool.query(
+      'DELETE FROM pictures WHERE picture_id = $1 AND uploader_id = $2 RETURNING picture_id, filename',
+      [pictureId, req.userId]
+    );
+
+    if (!rows.length) {
+      // Same response whether it doesn't exist or isn't theirs, so this can't
+      // be used to probe what's in the gallery.
+      return res.status(404).json({ error: 'No such photo of yours' });
+    }
+
+    // The row is the source of truth for the gallery, so it goes first. Losing
+    // the stored file afterwards would leave an orphan in Cloudinary — untidy
+    // and eventually billable — but failing the request after the row is gone
+    // would tell the user nothing happened when it did. deleteImage already
+    // swallows and logs its own errors.
+    await deleteImage(rows[0].filename);
+
+    res.json({ deleted: rows[0].picture_id });
   } catch (err) {
     next(err);
   }
